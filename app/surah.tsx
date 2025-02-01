@@ -1,8 +1,9 @@
 import { Dimensions, FlatList, StatusBar, StyleSheet } from "react-native";
 import quranData from "@/assets/data/quran.json";
-import { Text, View } from "@/components/Themed";
-import { Link, useLocalSearchParams, useNavigation } from "expo-router";
+import { View } from "@/components/Themed";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import AyahBookmark from "@/components/AyahBookmark";
+import { useEffect, useRef, useState } from "react";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -13,18 +14,29 @@ type SuraNumber = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 
   93 | 94 | 95 | 96 | 97 | 98 | 99 | 100 | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 | 111 | 112 | 113 | 114}`;
 
 export default function Surah() {
-  const { number } = useLocalSearchParams<{
+  const { number, ayah } = useLocalSearchParams<{
     number: SuraNumber;
+    ayah: string;
   }>();
 
   const router = useNavigation();
+  const flatListRef = useRef<FlatList<string>>(null);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    if (!hasScrolled) {
+      flatListRef.current?.scrollToIndex({
+        index: Math.min(Number(ayah) ?? 1, quranData[number].length - 1),
+        animated: false,
+      });
+      setHasScrolled(true);
+    }
+  }, [ayah]);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
     <StatusBar
-      translucent
-      backgroundColor="transparent"
-      barStyle="light-content"
+      hidden
     />
       { number && <FlatList
         data={quranData[number]}
@@ -34,6 +46,20 @@ export default function Surah() {
             <AyahBookmark item={item} />
           </View>
         )}
+        getItemLayout={(data, index) => ({
+          length: Dimensions.get("window").height || 800, // Fallback height
+          offset: (Dimensions.get("window").height || 800) * index,
+          index,
+        })}
+        onScrollToIndexFailed={(info) => {
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({
+              index: info.index,
+              animated: true,
+            });
+          }, 100);
+        }}
+        initialScrollIndex={Math.min(Number(ayah), quranData[number].length - 1)}
         pagingEnabled={true}
         showsVerticalScrollIndicator={false}
         onEndReached={() => {

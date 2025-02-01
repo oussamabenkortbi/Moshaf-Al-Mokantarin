@@ -58,15 +58,11 @@ export default function AyahBookmark({ item }: {
         onLongPress={toggleBookmark}
         style={styles.surahItem}
       >
-        <View style={styles.textContainer}>
-          {/* Arabic Text Fixes */}
+        <View style={[styles.textContainer, {
+          backgroundColor: isBookmarked ? '#aaa' : '#000'
+        }]}>
           <Text style={styles.arabicText}>
             {item.text}
-          </Text>
-          
-          {/* Verse Info */}
-          <Text style={styles.verseText}>
-            {item.chapter}:{item.verse}
           </Text>
         </View>
       </Pressable>
@@ -85,13 +81,13 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    padding: 40,
+    padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   arabicText: {
     color: 'white',
-    fontSize: 28,
+    fontSize: 26,
     textAlign: 'center',
     writingDirection: 'rtl',
     includeFontPadding: false,
