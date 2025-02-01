@@ -1,6 +1,6 @@
-import { Dimensions, FlatList, StatusBar, StyleSheet } from "react-native";
+import { View, Dimensions, FlatList, StatusBar, StyleSheet } from "react-native";
 import quranData from "@/assets/data/quran.json";
-import { View } from "@/components/Themed";
+// import { View } from "@/components/Themed";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import AyahBookmark from "@/components/AyahBookmark";
 import { useEffect, useRef, useState } from "react";
@@ -35,9 +35,9 @@ export default function Surah() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
-    <StatusBar
-      hidden
-    />
+      <StatusBar
+        hidden
+      />
       { number && <FlatList
         data={quranData[number]}
         keyExtractor={(item) => item.verse.toString()}

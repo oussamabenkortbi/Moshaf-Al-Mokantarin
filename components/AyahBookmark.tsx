@@ -54,7 +54,7 @@ export default function AyahBookmark({ item }: {
 
   return (
     <View style={[styles.container, {
-      backgroundColor: isBookmarked ? '#C99C33' : '#000'
+      backgroundColor: isBookmarked ? '#E5AE2D' : '#000'
     }]}>
       <Pressable
         onLongPress={toggleBookmark}

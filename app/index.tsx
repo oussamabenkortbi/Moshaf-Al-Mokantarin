@@ -25,7 +25,7 @@ export default function Home() {
           <Pressable style={styles.surahItem} onPress={() => router.push(`/surah?number=${item.id}&ayah=0`)}>
             <View style={{ flex: 1, flexDirection: 'row-reverse', alignItems: 'center' }}>
             <View style={styles.surahNumberContainer}>
-              <Feather name="hexagon" size={36} color="#C99C33" />
+              <Feather name="hexagon" size={36} color="#E5AE2D" />
               <Text style={styles.surahNumber}>{index + 1}</Text>
             </View>
               <Text style={styles.surahName}>سورة {item.name}</Text>
@@ -80,6 +80,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     writingDirection: 'rtl',
     fontFamily: 'hafs',
-    color: '#C99C33'
+    color: '#E5AE2D'
   },
 });
