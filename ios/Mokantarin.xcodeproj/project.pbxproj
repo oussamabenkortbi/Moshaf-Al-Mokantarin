@@ -364,6 +364,8 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = Mokantarin/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "مُصْحَفُ الْمُقَنْطَرِينَ";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -377,7 +379,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.kortbyoussama.Mokantarin;
-				PRODUCT_NAME = "Mokantarin";
+				PRODUCT_NAME = Mokantarin;
 				SWIFT_OBJC_BRIDGING_HEADER = "Mokantarin/Mokantarin-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -396,6 +398,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6NQGZZ4TU6;
 				INFOPLIST_FILE = Mokantarin/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "مُصْحَفُ الْمُقَنْطَرِينَ";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -409,7 +413,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.kortbyoussama.Mokantarin;
-				PRODUCT_NAME = "Mokantarin";
+				PRODUCT_NAME = Mokantarin;
 				SWIFT_OBJC_BRIDGING_HEADER = "Mokantarin/Mokantarin-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
