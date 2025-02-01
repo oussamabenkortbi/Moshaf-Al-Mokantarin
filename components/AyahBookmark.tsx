@@ -53,14 +53,14 @@ export default function AyahBookmark({ item }: {
   }, [item]); // Re-check when item changes
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {
+      backgroundColor: isBookmarked ? '#C99C33' : '#000'
+    }]}>
       <Pressable
         onLongPress={toggleBookmark}
         style={styles.surahItem}
       >
-        <View style={[styles.textContainer, {
-          backgroundColor: isBookmarked ? '#aaa' : '#000'
-        }]}>
+        <View style={[styles.textContainer]}>
           <Text style={styles.arabicText}>
             {item.text}
           </Text>
@@ -73,7 +73,7 @@ export default function AyahBookmark({ item }: {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    width: '100%',
   },
   surahItem: {
     width: '100%',
@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
+    width: '100%',
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
