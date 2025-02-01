@@ -1,4 +1,4 @@
-package com.kortbyoussama.Mokantarin
+package dz.osafcom.mokantarin
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

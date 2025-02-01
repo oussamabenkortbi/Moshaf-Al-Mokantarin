@@ -1,4 +1,4 @@
-import { FlatList, Pressable, StyleSheet } from "react-native";
+import { FlatList, Pressable, StatusBar, StyleSheet } from "react-native";
 import quranData from "@/assets/data/chapters/en.json";
 import { Text, View } from "@/components/Themed";
 import { Link, router } from "expo-router";
@@ -9,6 +9,9 @@ import { Feather } from "@expo/vector-icons";
 export default function Home() {
   return (
     <SafeAreaView style={styles.container}>
+            <StatusBar
+              hidden
+            />
       {/* <Link
         href="/surah?number=2&ayah=282"
         style={styles.surahItem}

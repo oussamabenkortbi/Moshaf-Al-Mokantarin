@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Mokantarin",
-    "slug": "Mokantarin",
+    "name": "مصحف المقنطرين",
+    "slug": "مصحف المقنطرين",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -11,18 +11,18 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#E5AE2D"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kortbyoussama.Mokantarin"
+      "bundleIdentifier": "dz.osafcom.mokantarin"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.kortbyoussama.Mokantarin"
+      "package": "dz.osafcom.mokantarin"
     },
     "web": {
       "bundler": "metro",

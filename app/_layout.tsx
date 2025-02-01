@@ -53,9 +53,9 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ autoHideHomeIndicator: true, headerShown: false, navigationBarHidden: true, statusBarHidden: true }}>
-        <Stack.Screen name="index" options={{ headerShown: false, autoHideHomeIndicator: true }} />
-        <Stack.Screen name="surah" options={{ headerShown: false, autoHideHomeIndicator: true }} />
+      <Stack screenOptions={{ autoHideHomeIndicator: true, headerShown: false, statusBarHidden: true }}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="surah" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

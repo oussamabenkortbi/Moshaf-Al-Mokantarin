@@ -1,4 +1,4 @@
-package com.kortbyoussama.Mokantarin
+package dz.osafcom.mokantarin
 
 import android.app.Application
 import android.content.res.Configuration

@@ -86,9 +86,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.kortbyoussama.Mokantarin'
+    namespace 'dz.osafcom.mokantarin'
     defaultConfig {
-        applicationId 'com.kortbyoussama.Mokantarin'
+        applicationId 'dz.osafcom.mokantarin'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

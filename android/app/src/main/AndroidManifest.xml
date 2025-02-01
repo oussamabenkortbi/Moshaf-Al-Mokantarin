@@ -26,6 +26,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
         <data android:scheme="com.kortbyoussama.Mokantarin"/>
+        <data android:scheme="dz.osafcom.mokantarin"/>
       </intent-filter>
     </activity>
   </application>
