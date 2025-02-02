@@ -20,7 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		13B07F961A680F5B00A75B9A /* Mokantarin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mokantarin.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07F961A680F5B00A75B9A /* mshfalmqntryn.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = mshfalmqntryn.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = Mokantarin/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = Mokantarin/AppDelegate.mm; sourceTree = "<group>"; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Mokantarin/Images.xcassets; sourceTree = "<group>"; };
@@ -103,7 +103,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* Mokantarin.app */,
+				13B07F961A680F5B00A75B9A /* mshfalmqntryn.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -172,7 +172,7 @@
 			);
 			name = Mokantarin;
 			productName = Mokantarin;
-			productReference = 13B07F961A680F5B00A75B9A /* Mokantarin.app */;
+			productReference = 13B07F961A680F5B00A75B9A /* mshfalmqntryn.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -364,7 +364,7 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = Mokantarin/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "مُصْحَفُ الْمُقَنْطَرِينَ";
+				INFOPLIST_KEY_CFBundleDisplayName = "مصحف المقنطرين";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -378,7 +378,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = "dz.osafcom.mokantarin";
+				PRODUCT_BUNDLE_IDENTIFIER = dz.osafcom.mokantarin;
 				PRODUCT_NAME = "mshfalmqntryn";
 				SWIFT_OBJC_BRIDGING_HEADER = "Mokantarin/Mokantarin-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -398,7 +398,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6NQGZZ4TU6;
 				INFOPLIST_FILE = Mokantarin/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "مُصْحَفُ الْمُقَنْطَرِينَ";
+				INFOPLIST_KEY_CFBundleDisplayName = "مصحف المقنطرين";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -412,7 +412,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = "dz.osafcom.mokantarin";
+				PRODUCT_BUNDLE_IDENTIFIER = dz.osafcom.mokantarin;
 				PRODUCT_NAME = "mshfalmqntryn";
 				SWIFT_OBJC_BRIDGING_HEADER = "Mokantarin/Mokantarin-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

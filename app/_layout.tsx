@@ -53,7 +53,7 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ autoHideHomeIndicator: true, headerShown: false, statusBarHidden: true }}>
+      <Stack screenOptions={{ autoHideHomeIndicator: true, headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="surah" options={{ headerShown: false }} />
       </Stack>
