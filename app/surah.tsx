@@ -1,5 +1,6 @@
 import { View, FlatList, StatusBar, StyleSheet, Text, ViewToken, Pressable, Image, ImageBackground, useWindowDimensions } from "react-native";
-import quranData from "@/assets/data/quran.json";
+import hafsData from "@/assets/data/hafs.json";
+import warshData from "@/assets/data/warsh.json";
 import chapterData from "@/assets/data/chapters/en.json";
 import { useLocalSearchParams } from "expo-router";
 import AyahBookmark from "@/components/AyahBookmark";
@@ -25,6 +26,8 @@ export default function Surah() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const [riwaya, setRiwaya] = useState<'hafs' | 'warsh'>('warsh');
+
   const { width, height } = useWindowDimensions();
 
   const flatListRef = useRef<FlatList<string>>(null);
@@ -33,6 +36,23 @@ export default function Surah() {
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 100,
   }).current;
+
+  const getRiwaya = async () => {
+    try {
+      const riwaya = await AsyncStorage.getItem("riwaya");
+      if (riwaya === 'warsh') {
+        setRiwaya('warsh');
+      } else {
+        setRiwaya('hafs');
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    getRiwaya();
+  }, []);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0) {
@@ -43,7 +63,7 @@ export default function Surah() {
   useEffect(() => {
     if (!hasScrolled) {
       flatListRef.current?.scrollToIndex({
-        index: Math.min(Number(ayah) ?? 1, quranData[number].length - 1),
+        index: Math.min(Number(ayah) ?? 1, hafsData[number].length - 1),
         animated: false,
       });
       setHasScrolled(true);
@@ -56,9 +76,9 @@ export default function Surah() {
       const bookmarksStorage = await AsyncStorage.getItem("bookmarks");
       const bookmarks = JSON.parse(bookmarksStorage || '[]');
       
-      const exists = bookmarks.some((bookmark: typeof quranData[1][1]) => 
-        bookmark.chapter === quranData[number][currentIndex].chapter && 
-        bookmark.verse === quranData[number][currentIndex].verse
+      const exists = bookmarks.some((bookmark: typeof hafsData[1][1]) => 
+        bookmark.chapter === hafsData[number][currentIndex].chapter && 
+        bookmark.verse === hafsData[number][currentIndex].verse
       );
       
       setCurrentBookmark(exists);
@@ -77,11 +97,11 @@ export default function Surah() {
       const bookmarks = JSON.parse(bookmarksStorage || '[]');
 
       const newBookmarks = currentBookmark
-        ? bookmarks.filter((bookmark: typeof quranData[1][1]) => 
-            !(bookmark.chapter === quranData[number][currentIndex].chapter && 
-              bookmark.verse === quranData[number][currentIndex].verse)
+        ? bookmarks.filter((bookmark: typeof hafsData[1][1]) => 
+            !(bookmark.chapter === hafsData[number][currentIndex].chapter && 
+              bookmark.verse === hafsData[number][currentIndex].verse)
           )
-        : [...bookmarks, quranData[number][currentIndex]];
+        : [...bookmarks, hafsData[number][currentIndex]];
 
       await AsyncStorage.setItem("bookmarks", JSON.stringify(newBookmarks));
       setCurrentBookmark(!currentBookmark);
@@ -104,6 +124,8 @@ export default function Surah() {
   const fontSizeAyah = interpolate(width, 18, 28, 320, 1366);
   const ayahFrameSize = interpolate(width, 36, 56, 320, 1366);
 
+  const surah = riwaya === 'hafs' ? hafsData[number] : warshData['السور'][number]['الآيات بالترقيم'];
+
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar
@@ -121,7 +143,7 @@ export default function Surah() {
       <View style={{ position: "absolute", bottom: 40, right: "10%", left: "10%", zIndex: 1, alignItems: "center" }}>
         <View style={[styles.surahNumberContainer, { width: ayahFrameSize, height: ayahFrameSize }]}>
           <Feather name="hexagon" size={ayahFrameSize} color="#E5AE2D" />
-          <Text style={[styles.surahNumber, { fontSize: fontSizeAyah }]}>{quranData[number][currentIndex].verse}</Text>
+          <Text style={[styles.surahNumber, { fontSize: fontSizeAyah }]}>{hafsData[number][currentIndex].verse}</Text>
         </View>
       </View>
 
@@ -138,17 +160,29 @@ export default function Surah() {
       </SafeAreaView>
 
       { number && <FlatList
-        data={quranData[number]}
-        keyExtractor={(item) => item.verse.toString()}
-        renderItem={({ item }) => (
-          <View style={[styles.itemContainer, {
-            // portrait if height > width
-            height: height > width ? height : '100%',
-            width: height > width ? '100%' : width,
-          }]}>
-            <AyahBookmark item={item} padding={padding} fontSize={fontSize} />
-          </View>
-        )}
+        data={surah}
+        keyExtractor={(item, index) => riwaya === 'hafs' ? item.verse.toString() : index.toString()}
+        renderItem={({ item: ayah, index }) => {
+          const ayahText = riwaya === 'hafs' ? JSON.parse(ayah.text) : JSON.parse(ayah)
+          const item: {
+            text: string;
+            chapter: number;
+            verse: number;
+          } = {
+            text: ayahText,
+            chapter: Number(number),
+            verse: index + 1,
+          }
+          const fontFamily = riwaya === 'hafs' ? 'hafs' : 'warsh';
+          return (
+            <View style={[styles.itemContainer, {
+              height: height > width ? height : '100%',
+              width: height > width ? '100%' : width,
+            }]}>
+              <AyahBookmark item={item} padding={padding} fontSize={fontSize} fontFamily={fontFamily} />
+            </View>
+          )
+        }}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         getItemLayout={(data, index) => ({
@@ -164,7 +198,7 @@ export default function Surah() {
             });
           }, 100);
         }}
-        initialScrollIndex={Math.min(Number(ayah), quranData[number].length - 1)}
+        initialScrollIndex={Math.min(Number(ayah), hafsData[number].length - 1)}
         pagingEnabled={true}
         showsVerticalScrollIndicator={false}
         // onEndReached={() => {

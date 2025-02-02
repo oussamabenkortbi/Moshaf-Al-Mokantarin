@@ -1,8 +1,8 @@
 import { ImageBackground, Pressable, StatusBar, StyleSheet, useWindowDimensions } from "react-native";
 import { Text, View } from "@/components/Themed";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { interpolate } from "@/logic/interploate";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Search() {
 
@@ -12,14 +12,49 @@ export default function Search() {
   const surahFrameWidth = interpolate(width, 256, 512, 320, 1366);
   const surahFrameHeight = interpolate(width, 67, 134, 320, 1366);
 
-  const [selected, setSelected] = useState<'hafs' | 'warsh'>('hafs')
+  const [selected, setSelected] = useState<'hafs' | 'warsh'>('hafs');
 
-  const handleWarsh = () => {
-    setSelected('warsh')
+  const getRiwaya = async () => {
+    try {
+      const riwaya = await AsyncStorage.getItem("riwaya");
+      if (riwaya === 'hafs' || riwaya === 'warsh') {
+        setSelected(riwaya);
+      } else {
+        await AsyncStorage.setItem("riwaya", "hafs");
+        setSelected('hafs');
+      }
+    } catch (error) {
+      console.log(error);
+    }
   }
-  const handleHafs = () => {
-    setSelected('hafs')
+
+  const handleWarsh = async () => {
+    try {
+      const riwaya = await AsyncStorage.getItem("riwaya");
+      if (riwaya === 'hafs') {
+        await AsyncStorage.setItem("riwaya", 'warsh');
+        setSelected('warsh')
+      }
+    } catch (error) {
+      console.log(error);
+    }
   }
+
+  const handleHafs = async () => {
+    try {
+      const riwaya = await AsyncStorage.getItem("riwaya");
+      if (riwaya === 'warsh') {
+        await AsyncStorage.setItem("riwaya", 'hafs');
+        setSelected('hafs')
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    getRiwaya();
+  }, []);
   
   return (
     <View style={styles.container}>

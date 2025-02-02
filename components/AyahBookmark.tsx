@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 
-export default function AyahBookmark({ item, padding, fontSize }: {
+export default function AyahBookmark({ item, padding, fontSize, fontFamily }: {
   item: {
+    text: string;
     chapter: number;
     verse: number;
-    text: string;
   },
-  padding: number
-  fontSize: number
+  padding: number;
+  fontSize: number;
+  fontFamily: 'warsh' | 'hafs';
 }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
 
@@ -24,6 +25,7 @@ export default function AyahBookmark({ item, padding, fontSize }: {
         }]}>
           <Text style={[styles.arabicText, {
             fontSize,
+            fontFamily,
           }]}>
             {item.text}
           </Text>
@@ -55,11 +57,5 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
     includeFontPadding: false,
     textAlignVertical: 'center',
-    fontFamily: 'hafs',
   },
-  verseText: {
-    color: '#fff',
-    textAlign: 'left',
-    fontFamily: 'hafs',
-  }
 });
