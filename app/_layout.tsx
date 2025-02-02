@@ -56,6 +56,9 @@ function RootLayoutNav() {
       <Stack screenOptions={{ autoHideHomeIndicator: true, headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="surah" options={{ headerShown: false }} />
+        <Stack.Screen name="mushaf" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="bookmarks" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="search" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );

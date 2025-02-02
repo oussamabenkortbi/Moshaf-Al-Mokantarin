@@ -1,60 +1,18 @@
-import { FlatList, ImageBackground, Pressable, StatusBar, StyleSheet, useWindowDimensions } from "react-native";
+import { FlatList, Pressable, StatusBar, StyleSheet } from "react-native";
 import quranData from "@/assets/data/chapters/en.json";
 import { Text, View } from "@/components/Themed";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather, FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { toArabicWord } from "@/logic/towords";
-import { interpolate } from "@/logic/interploate";
 
-export default function Home() {
-
-  const { width, height } = useWindowDimensions();
-
-  const fontSizeSurah = interpolate(width, 24, 42, 320, 1366);
-    const surahFrameWidth = interpolate(width, 160, 256, 320, 1366);
-    const surahFrameHeight = interpolate(width, 50, 67, 320, 1366);
-  
-  const fontSizeAyah = interpolate(width, 18, 28, 320, 1366);
-  const ayahFrameSize = interpolate(width, 36, 56, 320, 1366);
+export default function Bookmarks() {
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
         hidden
       />
-
-      <Link href="/bookmarks" style={{ position: "absolute", top: 0, left: 0, zIndex: 1, padding: 20 }}>
-        <FontAwesome name="bookmark-o" size={ayahFrameSize - 6} color="#E5AE2D" />
-      </Link>
-
-      <Link href="/search" style={{ position: "absolute", top: 0, right: 0, zIndex: 1, padding: 20 }}>
-        <MaterialCommunityIcons name="text-box-search-outline" size={ayahFrameSize - 6} color="#E5AE2D" />
-      </Link>
-
-      {/* Top Center */}
-      <SafeAreaView style={{ position: "absolute", top: 20, right: "10%", left: "10%", zIndex: 2, alignItems: "center" }}>
-        <ImageBackground
-          style={[styles.surahNameContainer, { width: surahFrameWidth, height: surahFrameHeight }]}
-          source={require("@/assets/icons/frame-o.png")}
-        >
-          <Link href="/mushaf" style={{ flex: 1, paddingTop: 2.5 }}>
-            <Text style={{ color: "#fff", fontFamily: "hafs", fontSize: fontSizeSurah }}>
-              القرآن الكريم
-            </Text>
-          </Link>
-        </ImageBackground>
-      </SafeAreaView>
-      <View style={{ height: 80 }}></View>
-
-      {/* <Link
-        href="/surah?number=2&ayah=282"
-        style={styles.surahItem}
-      >
-        <Text style={styles.surahName}>
-          Test
-        </Text>
-      </Link> */}
       <FlatList
         style={{ width: '100%' }}
         data={quranData}

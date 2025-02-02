@@ -1,4 +1,4 @@
-import { View, Dimensions, FlatList, StatusBar, StyleSheet, Text, ViewToken, Pressable, Image, ImageBackground, useWindowDimensions } from "react-native";
+import { View, FlatList, StatusBar, StyleSheet, Text, ViewToken, Pressable, Image, ImageBackground, useWindowDimensions } from "react-native";
 import quranData from "@/assets/data/quran.json";
 import chapterData from "@/assets/data/chapters/en.json";
 import { useLocalSearchParams } from "expo-router";
@@ -129,7 +129,7 @@ export default function Surah() {
       <SafeAreaView style={{ position: "absolute", top: 20, right: "10%", left: "10%", zIndex: 2, alignItems: "center" }}>
         <ImageBackground
           style={[styles.surahNameContainer, { width: surahFrameWidth, height: surahFrameHeight }]}
-          source={require("@/assets/icons/frame.png")}
+          source={require("@/assets/icons/frame-o.png")}
         >
           <Text style={{ color: "#fff", fontFamily: "hafs", fontSize: fontSizeSurah, marginBottom: 5 }}>
             سـورة {chapterData[Number(number) - 1].name}
@@ -152,8 +152,8 @@ export default function Surah() {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         getItemLayout={(data, index) => ({
-          length: Dimensions.get("window").height || 800, // Fallback height
-          offset: (Dimensions.get("window").height || 800) * index,
+          length: height > width ? height : width,
+          offset: (height > width ? height : width) * index,
           index,
         })}
         onScrollToIndexFailed={(info) => {
