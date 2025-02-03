@@ -30,11 +30,9 @@ export default function Search() {
 
   const handleWarsh = async () => {
     try {
-      const riwaya = await AsyncStorage.getItem("riwaya");
-      if (riwaya === 'hafs') {
-        await AsyncStorage.setItem("riwaya", 'warsh');
-        setSelected('warsh')
-      }
+      await AsyncStorage.getItem("riwaya");
+      await AsyncStorage.setItem("riwaya", 'warsh');
+      setSelected('warsh');
     } catch (error) {
       console.log(error);
     }
@@ -42,11 +40,9 @@ export default function Search() {
 
   const handleHafs = async () => {
     try {
-      const riwaya = await AsyncStorage.getItem("riwaya");
-      if (riwaya === 'warsh') {
-        await AsyncStorage.setItem("riwaya", 'hafs');
-        setSelected('hafs')
-      }
+      await AsyncStorage.getItem("riwaya");
+      await AsyncStorage.setItem("riwaya", 'hafs');
+      setSelected('hafs');
     } catch (error) {
       console.log(error);
     }

@@ -26,7 +26,7 @@ export default function Surah() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const [riwaya, setRiwaya] = useState<'hafs' | 'warsh'>('warsh');
+  const [riwaya, setRiwaya] = useState<'hafs' | 'warsh'>('hafs');
 
   const { width, height } = useWindowDimensions();
 
@@ -124,7 +124,7 @@ export default function Surah() {
   const fontSizeAyah = interpolate(width, 18, 28, 320, 1366);
   const ayahFrameSize = interpolate(width, 36, 56, 320, 1366);
 
-  const surah = riwaya === 'hafs' ? hafsData[number] : warshData['السور'][number]['الآيات بالترقيم'];
+  const surah = riwaya === 'hafs' ? hafsData[number] : warshData[number];
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
@@ -161,25 +161,15 @@ export default function Surah() {
 
       { number && <FlatList
         data={surah}
-        keyExtractor={(item, index) => riwaya === 'hafs' ? item.verse.toString() : index.toString()}
-        renderItem={({ item: ayah, index }) => {
-          const ayahText = riwaya === 'hafs' ? JSON.parse(ayah.text) : JSON.parse(ayah)
-          const item: {
-            text: string;
-            chapter: number;
-            verse: number;
-          } = {
-            text: ayahText,
-            chapter: Number(number),
-            verse: index + 1,
-          }
+        keyExtractor={(item) => item.verse.toString()}
+        renderItem={({ item: ayah }) => {
           const fontFamily = riwaya === 'hafs' ? 'hafs' : 'warsh';
           return (
             <View style={[styles.itemContainer, {
               height: height > width ? height : '100%',
               width: height > width ? '100%' : width,
             }]}>
-              <AyahBookmark item={item} padding={padding} fontSize={fontSize} fontFamily={fontFamily} />
+              <AyahBookmark item={ayah} padding={padding} fontSize={fontSize} fontFamily={fontFamily} />
             </View>
           )
         }}
