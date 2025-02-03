@@ -27,7 +27,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     ...FontAwesome.font,
-    hafs: require('../assets/fonts/hafs_regular.ttf'),
+    hafs: require('../assets/fonts/hafs.ttf'),
     warsh: require('../assets/fonts/warsh.ttf'),
   });
 
