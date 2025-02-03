@@ -28,7 +28,7 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({
     ...FontAwesome.font,
     hafs: require('../assets/fonts/hafs_regular.ttf'),
-    warsh: require('../assets/fonts/warsh_regular.ttf'),
+    warsh: require('../assets/fonts/warsh.ttf'),
   });
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.

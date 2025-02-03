@@ -159,7 +159,7 @@ export default function Surah() {
         </ImageBackground>
       </SafeAreaView>
 
-      { number && <FlatList
+      { number && surah && <FlatList
         data={surah}
         keyExtractor={(item) => item.verse.toString()}
         renderItem={({ item: ayah }) => {
