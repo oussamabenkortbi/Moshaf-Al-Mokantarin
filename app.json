@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "مصحف المقنطرين",
-    "slug": "مصحف المقنطرين",
+    "slug": "mokantarin",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -43,6 +43,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "c59e6bb6-c136-4030-8479-21953acdf430"
+      }
+    },
+    "owner": "kortbyoussama"
   }
 }
