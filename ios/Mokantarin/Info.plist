@@ -51,7 +51,8 @@
     </array>
     <key>UIAppFonts</key>
     <array>
-      <string>hafs_regular.ttf</string>
+      <string>hafs.ttf</string>
+      <string>warsh.ttf</string>
     </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>

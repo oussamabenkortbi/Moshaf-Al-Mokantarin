@@ -35,7 +35,8 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/hafs_regular.ttf"
+            "./assets/fonts/hafs.ttf",
+            "./assets/fonts/warsh.ttf"
           ]
         }
       ]
