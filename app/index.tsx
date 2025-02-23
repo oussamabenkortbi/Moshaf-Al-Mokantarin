@@ -24,13 +24,13 @@ export default function Home() {
         hidden
       />
 
-      <Link href="/bookmarks" style={{ position: "absolute", top: 0, left: 0, zIndex: 1, padding: 20 }}>
+      {/* <Link href="/bookmarks" style={{ position: "absolute", top: 0, left: 0, zIndex: 1, padding: 20 }}>
         <FontAwesome name="bookmark-o" size={ayahFrameSize - 6} color="#E5AE2D" />
-      </Link>
+      </Link> */}
 
-      <Link href="/search" style={{ position: "absolute", top: 0, right: 0, zIndex: 1, padding: 20 }}>
+      {/* <Link href="/search" style={{ position: "absolute", top: 0, right: 0, zIndex: 1, padding: 20 }}>
         <MaterialCommunityIcons name="text-box-search-outline" size={ayahFrameSize - 6} color="#E5AE2D" />
-      </Link>
+      </Link> */}
 
       {/* Top Center */}
       <SafeAreaView style={{ position: "absolute", top: 20, right: "10%", left: "10%", zIndex: 2, alignItems: "center" }}>

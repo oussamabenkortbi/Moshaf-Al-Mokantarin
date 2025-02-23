@@ -131,13 +131,13 @@ export default function Surah() {
       <StatusBar
         hidden
       />
-      <Pressable onPress={toggleBookmark} style={{ position: "absolute", top: 0, left: 0, zIndex: 1, padding: 20 }}>
+      {/* <Pressable onPress={toggleBookmark} style={{ position: "absolute", top: 0, left: 0, zIndex: 1, padding: 20 }}>
         <FontAwesome name={ currentBookmark ? "bookmark" : "bookmark-o"} size={ayahFrameSize - 6} color="#E5AE2D" />
-      </Pressable>
+      </Pressable> */}
 
-      <Pressable onPress={toggleTafsir} style={{ position: "absolute", top: 0, right: 0, zIndex: 1, padding: 20 }}>
+      {/* <Pressable onPress={toggleTafsir} style={{ position: "absolute", top: 0, right: 0, zIndex: 1, padding: 20 }}>
         <MaterialCommunityIcons name="text-box-search-outline" size={ayahFrameSize - 6} color="#E5AE2D" />
-      </Pressable>
+      </Pressable> */}
 
       {/* Bottom Center */}
       <View style={{ position: "absolute", bottom: 40, right: "10%", left: "10%", zIndex: 1, alignItems: "center" }}>
