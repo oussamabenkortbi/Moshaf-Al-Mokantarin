@@ -10,6 +10,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { interpolate } from "@/logic/interploate";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import Voice from '@react-native-community/voice';
+import Fuse from 'fuse.js';
 
 type SuraNumber = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
   21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 | 44 |
@@ -126,6 +128,80 @@ export default function Surah() {
 
   const surah = riwaya === 'hafs' ? hafsData[number] : warshData[number];
 
+  const [isListening, setIsListening] = useState(false);
+  const [spokenText, setSpokenText] = useState('');
+
+  useEffect(() => {
+    Voice.onSpeechResults = onSpeechResults;
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
+    };
+  }, []);
+
+  const startListening = async () => {
+    try {
+      setIsListening(true);
+      await Voice.start('ar-SA');
+    } catch (error) {
+      console.error('Error starting voice recognition:', error);
+    }
+  };
+
+  const stopListening = async () => {
+    try {
+      setIsListening(false);
+      await Voice.stop();
+      setSpokenText('');
+    } catch (error) {
+      console.error('Error stopping voice recognition:', error);
+    }
+  };
+
+  let silenceTimeout: ReturnType<typeof setTimeout>;
+
+  const normalizeText = (text: string) => {
+    return text
+      .normalize('NFD') // Normalize to decomposed form
+      .replace(/[\u064B-\u0652]/g, '') // Remove Arabic diacritical marks explicitly
+      .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
+      .trim(); // Trim leading and trailing spaces
+  };
+
+  const onSpeechResults = (event: { value?: string[] }) => {
+    const spokenText = event.value?.[0];
+    if (!spokenText || spokenText.length < 10) return; // Ensure spoken text is at least 10 characters
+    const normalizedSpokenText = normalizeText(spokenText);
+    setSpokenText(spokenText);
+
+    clearTimeout(silenceTimeout); // Clear any existing timeout
+
+    silenceTimeout = setTimeout(() => {
+      const verses = hafsData[number]?.map((verse) => {
+        const normalizedVerseText = normalizeText(verse.text); // Normalize verse text
+        return {
+          text: normalizedVerseText,
+          verse: verse.verse,
+        };
+      }) || [];
+
+      const fuse = new Fuse(verses, { keys: ['text'], threshold: 0.6 }); // Configure Fuse.js for fuzzy matching
+      const result = fuse.search(normalizedSpokenText);
+
+      if (result.length > 0) {
+        const matchedVerse = result[0].item;
+        console.log('Matched Verse:', matchedVerse); // Log the matched verse
+        flatListRef.current?.scrollToIndex({
+          index: matchedVerse.verse - 1,
+          animated: true,
+        });
+      } else {
+        console.warn('No matching verse found');
+      }
+
+      stopListening(); // Stop listening after processing
+    }, 1000); // Wait for 1 second of silence
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar
@@ -146,6 +222,14 @@ export default function Surah() {
           <Text style={[styles.surahNumber, { fontSize: fontSizeAyah }]}>{hafsData[number][currentIndex].verse}</Text>
         </View>
       </View>
+      {/* Bottom Left */}
+      <Pressable onPress={toggleBookmark} style={{ position: "absolute", bottom: 20, left: 20, zIndex: 10 }}>
+        <FontAwesome
+          name={currentBookmark ? "bookmark" : "bookmark-o"}
+          size={ayahFrameSize - 6}
+          color="#E5AE2D"
+        />
+      </Pressable>
 
       {/* Top Center */}
       <SafeAreaView style={{ position: "absolute", top: 20, right: "10%", left: "10%", zIndex: 2, alignItems: "center" }}>
@@ -157,10 +241,24 @@ export default function Surah() {
             سـورة {chapterData[Number(number) - 1].name}
           </Text>
         </ImageBackground>
+        {/* { show spoken text} */}
+        { spokenText ? (
+          <View style={[styles.textContainer, {
+            padding,
+          }]}>
+            <Text style={[styles.arabicText, {
+              fontSize,
+              fontFamily: riwaya === 'hafs' ? 'hafs' : 'warsh',
+            }]}>
+              {spokenText}
+            </Text>
+          </View>
+        ) : null }
       </SafeAreaView>
 
       { number && surah && <FlatList
         data={surah}
+        ref={flatListRef}
         keyExtractor={(item) => item.verse.toString()}
         renderItem={({ item: ayah }) => {
           const fontFamily = riwaya === 'hafs' ? 'hafs' : 'warsh';
@@ -196,6 +294,16 @@ export default function Surah() {
         // }}
         // onEndReachedThreshold={0.1}
       />}
+      <Pressable
+        onPress={isListening ? stopListening : startListening}
+        style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 10 }}
+      >
+        <MaterialCommunityIcons
+          name={isListening ? 'pause-circle' : 'microphone'}
+          size={36}
+          color="#E5AE2D"
+        />
+      </Pressable>
   </View>
   );
 }
@@ -211,6 +319,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     alignItems: 'center',
     textAlign: 'right',
+  },
+  textContainer: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  arabicText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    writingDirection: 'rtl',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   surahNumber: {
     fontWeight: "bold",

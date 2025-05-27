@@ -18,6 +18,12 @@ export default function Home() {
   const fontSizeAyah = interpolate(width, 18, 28, 320, 1366);
   const ayahFrameSize = interpolate(width, 36, 56, 320, 1366);
 
+  // return (
+  //   <View style={{ flex: 1, backgroundColor: '#000' }}>
+      
+  //   </View>
+  // )
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
