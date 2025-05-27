@@ -102,19 +102,23 @@ export default function Search() {
         </Pressable>
       </View>
 
-      <FlatList
-        data={searchResults}
-        keyExtractor={(item, index) => `${item.chapter}-${item.verse}-${index}`}
-        renderItem={({ item }) => (
-          <Pressable onPress={() => {
-            router.replace(`/surah?number=${item.chapter}&ayah=${item.verse - 1}`);
-          }} style={styles.resultItem}>
-            <Text style={{ color: colors.text }}>
-              {`${quranData[item.chapter - 1].name}, ${item.verse}: ${item.text}`}
-            </Text>
-          </Pressable>
-        )}
-      />
+      {searchResults.length === 0 && searchQuery !== "" ? (
+        <Text style={styles.noResultsText}>No Results Found</Text>
+      ) : (
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item, index) => `${item.chapter}-${item.verse}-${index}`}
+          renderItem={({ item }) => (
+            <Pressable onPress={() => {
+              router.replace(`/surah?number=${item.chapter}&ayah=${item.verse - 1}`);
+            }} style={styles.resultItem}>
+              <Text style={{ color: colors.text }}>
+                {`${quranData[item.chapter - 1].name}, ${item.verse}: ${item.text}`}
+              </Text>
+            </Pressable>
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -123,11 +127,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: "#f9f9f9",
   },
   searchBarContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   searchInput: {
     flex: 1,
@@ -136,14 +149,23 @@ const styles = StyleSheet.create({
     padding: 8,
     marginRight: 8,
   },
-  spokenText: {
-    marginVertical: 8,
-    fontSize: 16,
+  noResultsText: {
     textAlign: "center",
+    color: "#888",
+    fontSize: 16,
+    marginTop: 20,
   },
   resultItem: {
-    padding: 8,
+    padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomColor: "#eee",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginVertical: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
 });

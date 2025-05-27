@@ -34,50 +34,54 @@ export default function Bookmarks() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={bookmarks}
-        keyExtractor={(item, index) => `${item.chapter}-${item.verse}-${index}`}
-        renderItem={({ item }) => (
-          <Pressable onPress={() => {
-            router.replace(`/surah?number=${item.chapter}&ayah=${item.verse - 1}`);
-          }} style={styles.resultItem}>
-            <Text style={{ color: colors.text }}>
-              {`${quranData[item.chapter - 1].name}, ${item.verse}: ${item.text}`}
-            </Text>
-          </Pressable>
-        )}
-      />
-    </View>
+    <SafeAreaView style={styles.container}>
+      {bookmarks.length === 0 ? (
+        <Text style={styles.noBookmarksText}>No Bookmarks Found</Text>
+      ) : (
+        <FlatList
+          data={bookmarks}
+          keyExtractor={(item, index) => `${item.chapter}-${item.verse}-${index}`}
+          renderItem={({ item }) => (
+            <Pressable
+              onPress={() => {
+                router.replace(`/surah?number=${item.chapter}&ayah=${item.verse - 1}`);
+              }}
+              style={styles.resultItem}
+            >
+              <Text style={{ color: colors.text }}>
+                {`${quranData[item.chapter - 1].name}, ${item.verse}: ${item.text}`}
+              </Text>
+            </Pressable>
+          )}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 16,
+    backgroundColor: "#f9f9f9",
   },
-  searchBarContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
-    marginRight: 8,
-  },
-  spokenText: {
-    marginVertical: 8,
-    fontSize: 16,
+  noBookmarksText: {
     textAlign: "center",
+    color: "#888",
+    fontSize: 16,
+    marginTop: 20,
   },
   resultItem: {
-    padding: 8,
+    padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomColor: "#eee",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginVertical: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
 });
