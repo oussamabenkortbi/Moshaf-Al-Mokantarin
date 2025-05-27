@@ -1,11 +1,12 @@
-import { ImageBackground, Pressable, StatusBar, StyleSheet, useWindowDimensions } from "react-native";
-import { Text, View } from "@/components/Themed";
+import { ImageBackground, Pressable, StyleSheet, useWindowDimensions } from "react-native";
+import { Text, View, ThemedContainer } from "@/components/Themed";
 import { interpolate } from "@/logic/interploate";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTheme } from "@/contexts/ThemeContext";
 
-export default function Search() {
-
+export default function MushafSelector() {
+  const { colors } = useTheme();
   const { width } = useWindowDimensions();
 
   const fontSizeSurah = interpolate(width, 24, 42, 320, 1366);
@@ -26,59 +27,82 @@ export default function Search() {
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   const handleWarsh = async () => {
     try {
-      await AsyncStorage.getItem("riwaya");
       await AsyncStorage.setItem("riwaya", 'warsh');
       setSelected('warsh');
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   const handleHafs = async () => {
     try {
-      await AsyncStorage.getItem("riwaya");
       await AsyncStorage.setItem("riwaya", 'hafs');
       setSelected('hafs');
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
     getRiwaya();
   }, []);
   
+  const renderOption = (
+    isSelected: boolean, 
+    onPress: () => void, 
+    title: string
+  ) => (
+    <ImageBackground
+      key={title}
+      style={[styles.optionContainer, { 
+        width: surahFrameWidth, 
+        height: surahFrameHeight, 
+        marginVertical: 10 
+      }]}
+      source={isSelected ? require("@/assets/icons/frame.png") : require("@/assets/icons/frame-o.png")}
+      resizeMode="cover"
+    >
+      <Pressable 
+        onPress={onPress} 
+        style={({ pressed }) => [
+          styles.optionButton, 
+          { 
+            opacity: pressed ? 0.8 : 1,
+          }
+        ]}
+      >
+        <Text 
+          style={[
+            styles.optionText, 
+            { 
+              fontSize: fontSizeSurah,
+              color: isSelected ? colors.card : colors.text
+            }
+          ]}
+        >
+          {title}
+        </Text>
+      </Pressable>
+    </ImageBackground>
+  );
+  
   return (
-    <View style={styles.container}>
-      <StatusBar
-        hidden
-      />
-      
-      <ImageBackground
-        style={[styles.surahNameContainer, { width: surahFrameWidth, height: surahFrameHeight, marginVertical: 10 }]}
-        source={selected === 'warsh' ? require("@/assets/icons/frame.png") : require("@/assets/icons/frame-o.png")}
-      >
-        <Pressable onPress={handleWarsh} style={{ flex: 1, justifyContent: 'center', paddingBottom: 10 }}>
-          <Text style={{ color: selected === 'warsh' ? "#000" : "#fff", fontFamily: "hafs", fontSize: fontSizeSurah }}>
-            رواية ورش عن نافع
-          </Text>
-        </Pressable>
-      </ImageBackground>
-      <ImageBackground
-        style={[styles.surahNameContainer, { width: surahFrameWidth, height: surahFrameHeight, marginVertical: 10 }]}
-        source={selected === 'hafs' ? require("@/assets/icons/frame.png") : require("@/assets/icons/frame-o.png")}
-      >
-        <Pressable onPress={handleHafs} style={{ flex: 1, justifyContent: 'center', paddingBottom: 10 }}>
-          <Text style={{ color: selected === 'hafs' ? "#000" : "#fff", fontFamily: "hafs", fontSize: fontSizeSurah }}>
-            رواية حفص عن عاصم
-          </Text>
-        </Pressable>
-      </ImageBackground>
-    </View>
+    <ThemedContainer style={styles.container}>
+      {renderOption(
+        selected === 'warsh', 
+        handleWarsh, 
+        'رواية ورش عن نافع'
+      )}
+      {renderOption(
+        selected === 'hafs', 
+        handleHafs, 
+        'رواية حفص عن عاصم'
+      )}
+    </ThemedContainer>
   );
 }
 
@@ -87,52 +111,22 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: '#000'
+    padding: 20,
   },
-  surahNameContainer: {
-    position: "relative",
+  optionContainer: {
     alignItems: "center",
     justifyContent: "center",
   },
-  surahItem: { 
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    width: '100%',
-    backgroundColor: '#000'
+  optionButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    margin: 4,
   },
-  surahName: {
-    fontSize: 26,
-    fontWeight: "bold",
-    textAlign: 'right',
-    writingDirection: 'rtl',
+  optionText: {
     fontFamily: 'hafs',
-    color: '#fff'
-  },
-  surahNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: 'right',
-    writingDirection: 'rtl',
-    fontFamily: 'hafs',
-    color: '#fff',
-    position: "absolute",
-  },
-  surahNumberContainer: {
-    position: "relative",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 36,
-    height: 36,
-    marginLeft: 10,
-    backgroundColor: '#000'
-  },
-  surahIndex: {
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: 'right',
-    writingDirection: 'rtl',
-    fontFamily: 'hafs',
-    color: '#E5AE2D'
+    textAlign: 'center',
   },
 });

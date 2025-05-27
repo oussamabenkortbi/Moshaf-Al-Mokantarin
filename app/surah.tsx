@@ -1,4 +1,4 @@
-import { View, FlatList, StatusBar, StyleSheet, Text, ViewToken, Pressable, Image, ImageBackground, useWindowDimensions } from "react-native";
+import { FlatList, StyleSheet, Text, ViewToken, Pressable, ImageBackground, useWindowDimensions } from "react-native";
 import hafsData from "@/assets/data/hafs.json";
 import warshData from "@/assets/data/warsh.json";
 import chapterData from "@/assets/data/chapters/en.json";
@@ -10,8 +10,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { interpolate } from "@/logic/interploate";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Text as ThemedText, View as ThemedView, ThemedContainer } from "@/components/Themed";
+import { useTheme } from "@/contexts/ThemeContext";
 import Voice from '@react-native-community/voice';
 import Fuse from 'fuse.js';
+import { normalizeText } from "@/logic/normalizeText";
 
 type SuraNumber = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
   21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 | 44 |
@@ -53,24 +56,28 @@ export default function Surah() {
   }
 
   useEffect(() => {
-    getRiwaya();
-  }, []);
+    const initialize = async () => {
+      await getRiwaya();
+
+      if (!hasScrolled) {
+        flatListRef.current?.scrollToIndex({
+          index: Math.min(Number(ayah) ?? 1, hafsData[number].length - 1),
+          animated: false,
+        });
+        setHasScrolled(true);
+      }
+
+      checkBookmark();
+    };
+
+    initialize();
+  }, [ayah, currentIndex]);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0) {
       setCurrentIndex(viewableItems[0].index || 0);
     }
   }).current;
-
-  useEffect(() => {
-    if (!hasScrolled) {
-      flatListRef.current?.scrollToIndex({
-        index: Math.min(Number(ayah) ?? 1, hafsData[number].length - 1),
-        animated: false,
-      });
-      setHasScrolled(true);
-    }
-  }, [ayah]);
 
   // Check if current verse is bookmarked
   const checkBookmark = async () => {
@@ -159,14 +166,6 @@ export default function Surah() {
 
   let silenceTimeout: ReturnType<typeof setTimeout>;
 
-  const normalizeText = (text: string) => {
-    return text
-      .normalize('NFD') // Normalize to decomposed form
-      .replace(/[\u064B-\u0652]/g, '') // Remove Arabic diacritical marks explicitly
-      .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
-      .trim(); // Trim leading and trailing spaces
-  };
-
   const onSpeechResults = (event: { value?: string[] }) => {
     const spokenText = event.value?.[0];
     if (!spokenText || spokenText.length < 10) return; // Ensure spoken text is at least 10 characters
@@ -202,109 +201,177 @@ export default function Surah() {
     }, 1000); // Wait for 1 second of silence
   };
 
+  const { colors } = useTheme();
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#000' }}>
-      <StatusBar
-        hidden
-      />
-      {/* <Pressable onPress={toggleBookmark} style={{ position: "absolute", top: 0, left: 0, zIndex: 1, padding: 20 }}>
-        <FontAwesome name={ currentBookmark ? "bookmark" : "bookmark-o"} size={ayahFrameSize - 6} color="#E5AE2D" />
-      </Pressable> */}
+    <ThemedContainer style={styles.container}>
+      {/* Bottom Center - Current Ayah Number */}
+      <ThemedView style={{ 
+        position: "absolute", 
+        bottom: 40, 
+        right: "10%", 
+        left: "10%", 
+        zIndex: 1, 
+        alignItems: "center" 
+      }}>
+        <ThemedView style={[styles.surahNumberContainer, { 
+          width: ayahFrameSize, 
+          height: ayahFrameSize 
+        }]}>
+          <Feather 
+            name="hexagon" 
+            size={ayahFrameSize} 
+            color={colors.primary} 
+          />
+          <ThemedText 
+            style={[styles.surahNumber, { 
+              fontSize: fontSizeAyah,
+              color: colors.text
+            }]}
+          >
+            {hafsData[number][currentIndex].verse}
+          </ThemedText>
+        </ThemedView>
+      </ThemedView>
 
-      {/* <Pressable onPress={toggleTafsir} style={{ position: "absolute", top: 0, right: 0, zIndex: 1, padding: 20 }}>
-        <MaterialCommunityIcons name="text-box-search-outline" size={ayahFrameSize - 6} color="#E5AE2D" />
-      </Pressable> */}
-
-      {/* Bottom Center */}
-      <View style={{ position: "absolute", bottom: 40, right: "10%", left: "10%", zIndex: 1, alignItems: "center" }}>
-        <View style={[styles.surahNumberContainer, { width: ayahFrameSize, height: ayahFrameSize }]}>
-          <Feather name="hexagon" size={ayahFrameSize} color="#E5AE2D" />
-          <Text style={[styles.surahNumber, { fontSize: fontSizeAyah }]}>{hafsData[number][currentIndex].verse}</Text>
-        </View>
-      </View>
-      {/* Bottom Left */}
-      <Pressable onPress={toggleBookmark} style={{ position: "absolute", bottom: 20, left: 20, zIndex: 10 }}>
+      {/* Bottom Left - Bookmark Button */}
+      <Pressable 
+        onPress={toggleBookmark} 
+        style={{ 
+          position: "absolute", 
+          bottom: 20, 
+          left: 20, 
+          zIndex: 10,
+          backgroundColor: colors.card,
+          borderRadius: 20,
+          padding: 8,
+          elevation: 2,
+          shadowColor: colors.text,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.2,
+          shadowRadius: 1.41,
+        }}
+      >
         <FontAwesome
           name={currentBookmark ? "bookmark" : "bookmark-o"}
           size={ayahFrameSize - 6}
-          color="#E5AE2D"
+          color={colors.primary}
         />
       </Pressable>
 
-      {/* Top Center */}
-      <SafeAreaView style={{ position: "absolute", top: 20, right: "10%", left: "10%", zIndex: 2, alignItems: "center" }}>
+      {/* Top Center - Surah Title */}
+      <SafeAreaView style={{ 
+        position: "absolute", 
+        top: 20, 
+        right: "10%", 
+        left: "10%", 
+        zIndex: 2, 
+        alignItems: "center" 
+      }}>
         <ImageBackground
-          style={[styles.surahNameContainer, { width: surahFrameWidth, height: surahFrameHeight }]}
+          style={[styles.surahNameContainer, { 
+            width: surahFrameWidth, 
+            height: surahFrameHeight 
+          }]}
           source={require("@/assets/icons/frame-o.png")}
+          resizeMode="cover"
         >
-          <Text style={{ color: "#fff", fontFamily: "hafs", fontSize: fontSizeSurah, marginBottom: 5 }}>
+          <ThemedText style={{ 
+            fontFamily: "hafs", 
+            fontSize: fontSizeSurah, 
+            marginBottom: 5,
+            textAlign: 'center',
+            color: colors.text
+          }}>
             سـورة {chapterData[Number(number) - 1].name}
-          </Text>
+          </ThemedText>
         </ImageBackground>
-        {/* { show spoken text} */}
-        { spokenText ? (
-          <View style={[styles.textContainer, {
-            padding,
-          }]}>
-            <Text style={[styles.arabicText, {
+        
+        {/* Spoken Text Display */}
+        {spokenText && (
+          <ThemedView style={[styles.textContainer, { padding }]}>
+            <ThemedText style={[styles.arabicText, {
               fontSize,
               fontFamily: riwaya === 'hafs' ? 'hafs' : 'warsh',
+              color: colors.text,
             }]}>
               {spokenText}
-            </Text>
-          </View>
-        ) : null }
+            </ThemedText>
+          </ThemedView>
+        )}
       </SafeAreaView>
 
-      { number && surah && <FlatList
-        data={surah}
-        ref={flatListRef}
-        keyExtractor={(item) => item.verse.toString()}
-        renderItem={({ item: ayah }) => {
-          const fontFamily = riwaya === 'hafs' ? 'hafs' : 'warsh';
-          return (
-            <View style={[styles.itemContainer, {
-              height: height > width ? height : '100%',
-              width: height > width ? '100%' : width,
-            }]}>
-              <AyahBookmark item={ayah} padding={padding} fontSize={fontSize} fontFamily={fontFamily} />
-            </View>
-          )
-        }}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        getItemLayout={(data, index) => ({
-          length: height > width ? height : width,
-          offset: (height > width ? height : width) * index,
-          index,
-        })}
-        onScrollToIndexFailed={(info) => {
-          setTimeout(() => {
-            flatListRef.current?.scrollToIndex({
-              index: info.index,
-              animated: true,
-            });
-          }, 100);
-        }}
-        initialScrollIndex={Math.min(Number(ayah), hafsData[number].length - 1)}
-        pagingEnabled={true}
-        showsVerticalScrollIndicator={false}
-        // onEndReached={() => {
-        //   router.goBack();
-        // }}
-        // onEndReachedThreshold={0.1}
-      />}
+      {/* Ayah List */}
+      {number && surah && (
+        <FlatList
+          data={surah}
+          ref={flatListRef}
+          keyExtractor={(item) => item.verse.toString()}
+          renderItem={({ item: ayah }) => {
+            const fontFamily = riwaya === 'hafs' ? 'hafs' : 'warsh';
+            return (
+              <ThemedView style={[styles.itemContainer, {
+                height: height > width ? height : '100%',
+                width: height > width ? '100%' : width,
+                backgroundColor: colors.background,
+              }]}>
+                <AyahBookmark 
+                  item={ayah} 
+                  padding={padding} 
+                  fontSize={fontSize} 
+                  fontFamily={fontFamily} 
+                  textColor={colors.text}
+                />
+              </ThemedView>
+            );
+          }}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          getItemLayout={(data, index) => ({
+            length: height > width ? height : width,
+            offset: (height > width ? height : width) * index,
+            index,
+          })}
+          onScrollToIndexFailed={(info) => {
+            setTimeout(() => {
+              flatListRef.current?.scrollToIndex({
+                index: info.index,
+                animated: true,
+              });
+            }, 100);
+          }}
+          initialScrollIndex={Math.min(Number(ayah), hafsData[number].length - 1)}
+          pagingEnabled={true}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      {/* Voice Recognition Button */}
       <Pressable
         onPress={isListening ? stopListening : startListening}
-        style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 10 }}
+        style={({ pressed }) => ({
+          position: 'absolute', 
+          bottom: 20, 
+          right: 20, 
+          zIndex: 10,
+          backgroundColor: colors.card,
+          borderRadius: 24,
+          padding: 8,
+          elevation: 2,
+          shadowColor: colors.text,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.2,
+          shadowRadius: 1.41,
+          opacity: pressed ? 0.8 : 1,
+        })}
       >
         <MaterialCommunityIcons
           name={isListening ? 'pause-circle' : 'microphone'}
           size={36}
-          color="#E5AE2D"
+          color={colors.primary}
         />
       </Pressable>
-  </View>
+    </ThemedContainer>
   );
 }
 
@@ -313,10 +380,8 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     width: '100%',
-    backgroundColor: '#000',
   },
   itemContainer: {
-    backgroundColor: '#000',
     alignItems: 'center',
     textAlign: 'right',
   },
@@ -325,31 +390,32 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
   },
   arabicText: {
-    color: 'white',
     fontSize: 16,
     textAlign: 'center',
     writingDirection: 'rtl',
     includeFontPadding: false,
     textAlignVertical: 'center',
+    lineHeight: 40,
   },
   surahNumber: {
-    fontWeight: "bold",
-    textAlign: 'right',
-    writingDirection: 'rtl',
+    fontWeight: 'bold',
+    textAlign: 'center',
     fontFamily: 'hafs',
-    color: '#fff',
-    position: "absolute",
+    position: 'absolute',
   },
   surahNumberContainer: {
-    position: "relative",
-    alignItems: "center",
-    justifyContent: "center",
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   surahNameContainer: {
-    position: "relative",
-    alignItems: "center",
-    justifyContent: "center",
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

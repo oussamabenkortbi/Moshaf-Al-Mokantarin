@@ -1,90 +1,149 @@
-import { FlatList, Pressable, StatusBar, StyleSheet } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { ThemedContainer, Text } from "@/components/Themed";
+import { useTheme } from "@/contexts/ThemeContext";
+import Voice from "@react-native-community/voice";
+import Fuse from "fuse.js";
+import { normalizeText } from "@/logic/normalizeText";
 import quranData from "@/assets/data/chapters/en.json";
-import { Text, View } from "@/components/Themed";
+import hafsData from "@/assets/data/hafs.json";
 import { router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
-import { toArabicWord } from "@/logic/towords";
+
+type Verse = {
+  chapter: number;
+  verse: number;
+  text: string;
+};
+
+type HafsData = {
+  [key: string]: Verse[];
+};
 
 export default function Search() {
+  const { colors } = useTheme();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const [searchResults, setSearchResults] = useState<Verse[]>([]);
+
+  const inputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    Voice.onSpeechResults = onSpeechResults;
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
+    };
+  }, []);
+
+  const startListening = async () => {
+    try {
+      setIsListening(true);
+      await Voice.start("ar-SA");
+    } catch (error) {
+      console.error("Error starting voice recognition:", error);
+    }
+  };
+
+  const stopListening = async () => {
+    try {
+      setIsListening(false);
+      await Voice.stop();
+      setSearchQuery("");
+    } catch (error) {
+      console.error("Error stopping voice recognition:", error);
+    }
+  };
+
+  const onSpeechResults = (event: { value?: string[] }) => {
+    const spokenText = event.value?.[0];
+    if (!spokenText || spokenText.length < 10) return;
+    const normalizedSpokenText = normalizeText(spokenText);
+    setSearchQuery(spokenText);
+    performSearch(normalizedSpokenText);
+  };
+
+  const performSearch = (query: string) => {
+    const verses = Object.values(hafsData).flat().map((verse) => {
+      const normalizedVerseText = normalizeText(verse.text);
+      return {
+        text: normalizedVerseText,
+        verse: verse.verse,
+        chapter: verse.chapter,
+      };
+    });
+
+    const fuse = new Fuse(verses, { keys: ["text"], threshold: 0.5 });
+    const results = fuse.search(query);
+    setSearchResults(results.map((result) => result.item));
+  };
+
+  const handleSearchInput = (text: string) => {
+    setSearchQuery(text);
+    performSearch(text);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        hidden
-      />
+    <View style={styles.container}>
+      <View style={styles.searchBarContainer}>
+        <TextInput
+          ref={inputRef}
+          style={[styles.searchInput, { color: colors.text, borderColor: colors.primary }]}
+          placeholder="Search Ayahs"
+          placeholderTextColor={colors.text}
+          value={searchQuery}
+          onChangeText={handleSearchInput}
+        />
+        <Pressable onPress={isListening ? stopListening : startListening}>
+          <MaterialCommunityIcons
+            name={isListening ? "pause-circle" : "microphone"}
+            size={36}
+            color={colors.primary}
+          />
+        </Pressable>
+      </View>
+
       <FlatList
-        style={{ width: '100%' }}
-        data={quranData}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item, index }) => (
-          <Pressable style={styles.surahItem} onPress={() => router.push(`/surah?number=${item.id}&ayah=0`)}>
-            <View style={{ flex: 1, flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: '#000' }}>
-              <View style={styles.surahNumberContainer}>
-                <Feather name="hexagon" size={36} color="#E5AE2D" />
-                <Text style={styles.surahNumber}>{index + 1}</Text>
-              </View>
-              <Text style={styles.surahName}>سورة {item.name}</Text>
-            </View>
-            <Text style={styles.surahIndex}>{item.type === "meccan" ? "مكية" : "مدنية"} وآياتها {toArabicWord(item.total_verses)}</Text>
+        data={searchResults}
+        keyExtractor={(item, index) => `${item.chapter}-${item.verse}-${index}`}
+        renderItem={({ item }) => (
+          <Pressable onPress={() => {
+            router.replace(`/surah?number=${item.chapter}&ayah=${item.verse - 1}`);
+          }} style={styles.resultItem}>
+            <Text style={{ color: colors.text }}>
+              {`${quranData[item.chapter - 1].name}, ${item.verse}: ${item.text}`}
+            </Text>
           </Pressable>
         )}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: '#000'
-  },
-  surahNameContainer: {
-    position: "relative",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  surahItem: { 
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    width: '100%',
-    backgroundColor: '#000'
   },
-  surahName: {
-    fontSize: 26,
-    fontWeight: "bold",
-    textAlign: 'right',
-    writingDirection: 'rtl',
-    fontFamily: 'hafs',
-    color: '#fff'
-  },
-  surahNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: 'right',
-    writingDirection: 'rtl',
-    fontFamily: 'hafs',
-    color: '#fff',
-    position: "absolute",
-  },
-  surahNumberContainer: {
-    position: "relative",
+  searchBarContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    width: 36,
-    height: 36,
-    marginLeft: 10,
-    backgroundColor: '#000'
+    marginBottom: 16,
   },
-  surahIndex: {
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: 'right',
-    writingDirection: 'rtl',
-    fontFamily: 'hafs',
-    color: '#E5AE2D'
+  searchInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+    marginRight: 8,
+  },
+  spokenText: {
+    marginVertical: 8,
+    fontSize: 16,
+    textAlign: "center",
+  },
+  resultItem: {
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
   },
 });

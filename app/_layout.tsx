@@ -1,15 +1,13 @@
-import { useColorScheme } from "@/components/useColorScheme";
+import { useColorScheme } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
+import { ThemeProvider as NavigationThemeProvider, DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme } from "@react-navigation/native";
+import { ThemeProvider as CustomThemeProvider } from "@/contexts/ThemeContext";
+import { StatusBar } from "expo-status-bar";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -46,21 +44,28 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <CustomThemeProvider>
+      <RootLayoutNav />
+    </CustomThemeProvider>
+  );
 }
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const defaultTheme = colorScheme === "dark" ? NavigationDarkTheme : NavigationDefaultTheme;
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <NavigationThemeProvider value={defaultTheme}>
+      <StatusBar style="auto" />
       <Stack screenOptions={{ autoHideHomeIndicator: true, headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="surah" options={{ headerShown: false }} />
         <Stack.Screen name="mushaf" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="bookmarks" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="search" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="theme" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
-    </ThemeProvider>
+    </NavigationThemeProvider>
   );
 }
