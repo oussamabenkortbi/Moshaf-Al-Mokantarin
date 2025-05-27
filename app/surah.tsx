@@ -1,11 +1,11 @@
-import { FlatList, StyleSheet, Text, ViewToken, Pressable, ImageBackground, useWindowDimensions } from "react-native";
+import { FlatList, StyleSheet, Text, ViewToken, Pressable, ImageBackground, useWindowDimensions, View, TouchableOpacity, Animated, Easing } from 'react-native';
 import hafsData from "@/assets/data/hafs.json";
 import warshData from "@/assets/data/warsh.json";
 import chapterData from "@/assets/data/chapters/en.json";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from 'expo-router';
 import AyahBookmark from "@/components/AyahBookmark";
-import { useEffect, useRef, useState } from "react";
-import { Feather, FontAwesome } from "@expo/vector-icons";
+import { useRef, useState, useEffect } from 'react';
+import { Feather, FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { interpolate } from "@/logic/interploate";
@@ -13,8 +13,8 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text as ThemedText, View as ThemedView, ThemedContainer } from "@/components/Themed";
 import { useTheme } from "@/contexts/ThemeContext";
 import Voice from '@react-native-community/voice';
-import Fuse from 'fuse.js';
 import { normalizeText } from "@/logic/normalizeText";
+import { isVerificationMatch } from '@/logic/isMatch';
 
 type SuraNumber = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
   21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 | 44 |
@@ -96,10 +96,6 @@ export default function Surah() {
     }
   };
 
-  const toggleTafsir = async () => {
-    // router.push("/tafsir")
-  };
-
   const toggleBookmark = async () => {
     try {
       const bookmarksStorage = await AsyncStorage.getItem("bookmarks");
@@ -135,76 +131,240 @@ export default function Surah() {
 
   const surah = riwaya === 'hafs' ? hafsData[number] : warshData[number];
 
+  // Refs for cleanup
+  const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animation = useRef<Animated.CompositeAnimation | null>(null);
+  const waveAnimations = useRef<Animated.CompositeAnimation[]>([]);
+  
+  // Animation values
+  const animationValue = useRef(new Animated.Value(0)).current;
+  const waveAnimationValues = [
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+  ];
+
   const [isListening, setIsListening] = useState(false);
   const [spokenText, setSpokenText] = useState('');
+  const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationText, setVerificationText] = useState('');
+  const [isReadingCurrentVerse, setIsReadingCurrentVerse] = useState(true);
+  const isMounted = useRef(true);
 
+  // Initialize animations
+  useEffect(() => {
+    if (isListening) {
+      // Main button pulse animation
+      animation.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(animationValue, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(animationValue, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      animation.current.start();
+
+      // Wave animations
+      waveAnimations.current = waveAnimationValues.map((value, index) => {
+        const anim = Animated.loop(
+          Animated.sequence([
+            Animated.delay(index * 200),
+            Animated.timing(value, {
+              toValue: 1,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(value, {
+              toValue: 0,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+          ])
+        );
+        anim.start();
+        return anim;
+      });
+    } else {
+      // Clean up animations
+      if (animation.current) {
+        animation.current.stop();
+        animation.current = null;
+      }
+      waveAnimations.current.forEach(anim => anim?.stop());
+      waveAnimations.current = [];
+      animationValue.setValue(0);
+      waveAnimationValues.forEach(value => value.setValue(0));
+    }
+
+    return () => {
+      if (animation.current) {
+        animation.current.stop();
+      }
+      waveAnimations.current.forEach(anim => anim?.stop());
+    };
+  }, [isListening]);
+
+  // Handle voice recognition setup and cleanup
   useEffect(() => {
     Voice.onSpeechResults = onSpeechResults;
+    
     return () => {
+      isMounted.current = false;
       Voice.destroy().then(Voice.removeAllListeners);
+      if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
   }, []);
 
   const startListening = async () => {
+    if (!isMounted.current) return;
+    
     try {
       setIsListening(true);
+      setSpokenText('');
       await Voice.start('ar-SA');
     } catch (error) {
       console.error('Error starting voice recognition:', error);
+      setIsListening(false);
     }
   };
 
   const stopListening = async () => {
     try {
-      setIsListening(false);
+      // Stop all animations
+      if (animation.current) {
+        animation.current.stop();
+        animation.current = null;
+      }
+
+      waveAnimations.current.forEach((anim) => {
+        if (anim) {
+          anim.stop();
+        }
+      });
+      waveAnimations.current = [];
+
+      // Reset animation values
+      animationValue.setValue(0);
+      waveAnimationValues.forEach((value) => value.setValue(0));
+
+      // Stop voice recognition
       await Voice.stop();
-      setSpokenText('');
+
+      // Update state
+      setIsListening(false);
+      setIsVerifying(false);
+      setVerificationText('');
+
+      // Clear any pending timeouts
+      if (silenceTimeout.current) {
+        clearTimeout(silenceTimeout.current);
+        silenceTimeout.current = null;
+      }
+
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+        debounceTimeout.current = null;
+      }
     } catch (error) {
       console.error('Error stopping voice recognition:', error);
+      setIsListening(false);
     }
   };
 
-  let silenceTimeout: ReturnType<typeof setTimeout>;
+  // Get the first 3 words of the next verse for verification
+  const getNextVerseVerificationText = (verseIndex: number) => {
+    const nextVerseIndex = verseIndex + 1;
+    const nextVerse = hafsData[number]?.[nextVerseIndex];
+    if (!nextVerse) return '';
+    
+    // Get first 3 words of the next verse
+    const words = nextVerse.text.split(/\s+/).slice(0, 3);
+    const verificationText = normalizeText(words.join(' '));
+    console.log('Verification text:', verificationText);
+    return verificationText;
+  };
 
   const onSpeechResults = (event: { value?: string[] }) => {
-    const spokenText = event.value?.[0];
-    if (!spokenText || spokenText.length < 10) return; // Ensure spoken text is at least 10 characters
-    const normalizedSpokenText = normalizeText(spokenText);
-    setSpokenText(spokenText);
+    const text = event.value?.[0];
+    if (!text || !isMounted.current) return;
 
-    clearTimeout(silenceTimeout); // Clear any existing timeout
+    setSpokenText(text);
+    
+    // Clear any existing debounce timeout
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
 
-    silenceTimeout = setTimeout(() => {
-      const verses = hafsData[number]?.map((verse) => {
-        const normalizedVerseText = normalizeText(verse.text); // Normalize verse text
-        return {
-          text: normalizedVerseText,
-          verse: verse.verse,
-        };
-      }) || [];
+    // Set new debounce timeout
+    debounceTimeout.current = setTimeout(() => {
+      if (!isMounted.current) return;
+      
+      const normalizedText = normalizeText(text);
+      console.log('Normalized text:', normalizedText);
+      
+      if (normalizedText.length < 3) return;
 
-      const fuse = new Fuse(verses, { keys: ['text'], threshold: 0.6 }); // Configure Fuse.js for fuzzy matching
-      const result = fuse.search(normalizedSpokenText);
-
-      if (result.length > 0) {
-        const matchedVerse = result[0].item;
-        console.log('Matched Verse:', matchedVerse); // Log the matched verse
-        flatListRef.current?.scrollToIndex({
-          index: matchedVerse.verse - 1,
-          animated: true,
-        });
-      } else {
-        console.warn('No matching verse found');
+      if (isVerifying) {
+        // Verify the next verse
+        const targetText = getNextVerseVerificationText(currentVerseIndex);
+        console.log('Target text:', targetText);
+        
+        // Check if the spoken text matches the first 3 words of the next verse
+        const isMatch = isVerificationMatch(normalizedText, targetText);
+        console.log('Match result:', isMatch);
+        
+        if (isMatch) {
+          // If match is correct, move to next verse
+          const nextVerseIndex = currentVerseIndex + 1;
+          if (nextVerseIndex < (hafsData[number]?.length || 0)) {
+            setVerificationText('✅ Correct! Reading next verse...');
+            setCurrentVerseIndex(nextVerseIndex);
+            flatListRef.current?.scrollToIndex({
+              index: nextVerseIndex,
+              animated: true,
+              viewPosition: 0.5,
+            });
+            // Reset for reading the new current verse
+            setIsReadingCurrentVerse(true);
+            setVerificationText('Read the current verse');
+          }
+        } else {
+          // If no match, stay on current verse and prompt again
+          setVerificationText('❌ Try again. Read the first 3 words of the next verse');
+        }
+        setIsVerifying(false);
+      } else if (isReadingCurrentVerse) {
+        // After reading current verse, prepare for next verse verification
+        setIsReadingCurrentVerse(false);
+        setIsVerifying(true);
+        setVerificationText('Now read the first 3 words of the next verse');
       }
-
-      stopListening(); // Stop listening after processing
-    }, 1000); // Wait for 1 second of silence
+    }, 1000); // 1 second debounce
   };
 
   const { colors } = useTheme();
 
+  // Reset verification state when starting to listen
+  const handleStartListening = async () => {
+    setIsReadingCurrentVerse(true);
+    setIsVerifying(false);
+    setVerificationText('Read the current verse');
+    await startListening();
+  };
+
   return (
     <ThemedContainer style={styles.container}>
+
       {/* Bottom Center - Current Ayah Number */}
       <ThemedView style={{ 
         position: "absolute", 
@@ -287,18 +447,32 @@ export default function Surah() {
           </ThemedText>
         </ImageBackground>
         
-        {/* Spoken Text Display */}
-        {spokenText && (
-          <ThemedView style={[styles.textContainer, { padding }]}>
+        {/* Spoken Text and Verification Feedback */}
+        <ThemedView style={[styles.feedbackContainer, { padding }]}>
+          {verificationText ? (
+            <ThemedText style={[styles.verificationText, {
+              color: verificationText.startsWith('✅') ? '#4CAF50' : 
+                     verificationText.startsWith('❌') ? '#F44336' : colors.text,
+              fontSize: 16,
+              textAlign: 'center',
+              marginBottom: 10,
+              fontWeight: 'bold'
+            }]}>
+              {verificationText}
+            </ThemedText>
+          ) : null}
+          {spokenText ? (
             <ThemedText style={[styles.arabicText, {
               fontSize,
               fontFamily: riwaya === 'hafs' ? 'hafs' : 'warsh',
               color: colors.text,
+              opacity: 0.7,
+              marginTop: 5
             }]}>
               {spokenText}
             </ThemedText>
-          </ThemedView>
-        )}
+          ) : null}
+        </ThemedView>
       </SafeAreaView>
 
       {/* Ayah List */}
@@ -348,7 +522,7 @@ export default function Surah() {
 
       {/* Voice Recognition Button */}
       <Pressable
-        onPress={isListening ? stopListening : startListening}
+        onPress={isListening ? stopListening : handleStartListening}
         style={({ pressed }) => ({
           position: 'absolute', 
           bottom: 20, 
@@ -376,6 +550,39 @@ export default function Surah() {
 }
 
 const styles = StyleSheet.create({
+  micButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    zIndex: 1,
+  },
+  micButton: {
+    borderRadius: 50,
+    padding: 15,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  verificationContainer: {
+    position: 'absolute',
+    top: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 100,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 10,
+    borderRadius: 20,
+    marginHorizontal: 20,
+  },
+  verificationText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   container: {
     flex: 1,
     height: '100%',
@@ -417,5 +624,14 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  feedbackContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
 });
