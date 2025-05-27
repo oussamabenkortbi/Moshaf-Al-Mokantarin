@@ -63,7 +63,8 @@ function RootLayoutNav() {
         <Stack.Screen name="surah" options={{ headerShown: false }} />
         <Stack.Screen name="mushaf" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="bookmarks" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="search" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="searchMic" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="searchKeyboard" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="theme" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
     </NavigationThemeProvider>

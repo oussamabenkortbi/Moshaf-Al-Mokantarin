@@ -24,32 +24,58 @@ export default function Home() {
 
 
       {/* Top Center - Quran Title */}
-      <SafeAreaView style={{ position: "absolute", top: 40, right: "10%", left: "10%", zIndex: 1, alignItems: "center" }}>
-        {/* top right icon */}
-        <Link 
-          href="/theme" 
-          style={{ 
-            position: "absolute", 
-            top: 20, 
-            right: 20, 
-            zIndex: 2, 
-            padding: 10,
-            backgroundColor: colors.card,
-            borderRadius: 20,
-            elevation: 2,
-            shadowColor: colors.text,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-          }}
-        >
-          <MaterialCommunityIcons 
-            name={colors.isDark ? 'weather-sunny' : 'weather-night'} 
-            size={24} 
-            color={colors.primary} 
-          />
-        </Link>
-        {/* top center title */}
+      <SafeAreaView style={{ 
+        position: "absolute", 
+        top: 40, 
+        zIndex: 1, 
+        flexDirection: "row", 
+        justifyContent: "space-between", 
+        alignItems: "center" 
+      }}>
+        {/* Left icons */}
+        <View style={{ flexDirection: "row" }}>
+          <Link 
+            href="/searchKeyboard" 
+            style={{ 
+              padding: 10,
+              backgroundColor: colors.card,
+              borderRadius: 20,
+              elevation: 2,
+              shadowColor: colors.text,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              marginRight: 10,
+            }}
+          >
+            <MaterialCommunityIcons 
+              name="magnify" 
+              size={24} 
+              color={colors.primary} 
+            />
+          </Link>
+          <Link 
+            href="/searchMic" 
+            style={{ 
+              padding: 10,
+              backgroundColor: colors.card,
+              borderRadius: 20,
+              elevation: 2,
+              shadowColor: colors.text,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+            }}
+          >
+            <MaterialCommunityIcons 
+              name="microphone" 
+              size={24} 
+              color={colors.primary} 
+            />
+          </Link>
+        </View>
+
+        {/* Center title */}
         <ImageBackground
           style={[styles.surahNameContainer, { width: surahFrameWidth, height: surahFrameHeight }]}
           source={require("@/assets/icons/frame-o.png")}
@@ -65,55 +91,49 @@ export default function Home() {
             </Text>
           </Link>
         </ImageBackground>
-        {/* top left icon */}
-        <Link 
-          href="/search" 
-          style={{ 
-            position: "absolute", 
-            top: 20, 
-            left: 20, 
-            zIndex: 2, 
-            padding: 10,
-            backgroundColor: colors.card,
-            borderRadius: 20,
-            elevation: 2,
-            shadowColor: colors.text,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-          }}
-        >
-          <MaterialCommunityIcons 
-            name="magnify" 
-            size={24} 
-            color={colors.primary} 
-          />
-        </Link>
-        { /* top center icon for bookmarks */}
-        <Link 
-          href="/bookmarks" 
-          style={{ 
-            position: "absolute", 
-            top: 20, 
-            left: "50%", 
-            transform: [{ translateX: -20 }],
-            zIndex: 2, 
-            padding: 10,
-            backgroundColor: colors.card,
-            borderRadius: 20,
-            elevation: 2,
-            shadowColor: colors.text,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-          }}
-        >
-          <MaterialCommunityIcons 
-            name="bookmark" 
-            size={24} 
-            color={colors.primary} 
-          />
-        </Link>
+
+        {/* Right icons */}
+        <View style={{ flexDirection: "row" }}>
+          <Link 
+            href="/bookmarks" 
+            style={{ 
+              padding: 10,
+              backgroundColor: colors.card,
+              borderRadius: 20,
+              elevation: 2,
+              shadowColor: colors.text,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              marginRight: 10,
+            }}
+          >
+            <MaterialCommunityIcons 
+              name="bookmark" 
+              size={24} 
+              color={colors.primary} 
+            />
+          </Link>
+          <Link 
+            href="/theme" 
+            style={{ 
+              padding: 10,
+              backgroundColor: colors.card,
+              borderRadius: 20,
+              elevation: 2,
+              shadowColor: colors.text,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+            }}
+          >
+            <MaterialCommunityIcons 
+              name={colors.isDark ? 'weather-sunny' : 'weather-night'} 
+              size={24} 
+              color={colors.primary} 
+            />
+          </Link>
+        </View>
       </SafeAreaView>
       
       <View style={{ height: 140 }} />
