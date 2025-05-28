@@ -28,7 +28,6 @@ export default function Surah() {
     ayah: string;
   }>();
 
-  const [hasScrolled, setHasScrolled] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [riwaya, setRiwaya] = useState<'hafs' | 'warsh'>('hafs');
   const [currentBookmark, setCurrentBookmark] = useState(false);
@@ -36,9 +35,7 @@ export default function Surah() {
   const [spokenText, setSpokenText] = useState('');
   const [verificationText, setVerificationText] = useState('');
   const [debugInfo, setDebugInfo] = useState('');
-  const [lastTransitionTime, setLastTransitionTime] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
-  const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
 
   const flatListRef = useRef<FlatList<string>>(null);
   const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,6 +66,10 @@ export default function Surah() {
       console.error("Error getting riwaya:", error);
     }
   }
+
+  useEffect(() => {
+    getRiwaya();
+  }, []);
 
   useEffect(() => {
     console.log(debugInfo);
@@ -108,8 +109,10 @@ export default function Surah() {
   };
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    if (viewableItems.length > 0) {
-      setCurrentIndex(viewableItems[0].index || 0);
+    if (viewableItems.length > 0 && isMounted.current) {
+      const newIndex = viewableItems[0].index || 0;
+      setCurrentIndex(newIndex);
+      console.log('Viewable item changed:', newIndex);
     }
   }).current;
   
@@ -177,13 +180,18 @@ export default function Surah() {
   };
 
   const getCurrentVerseText = (verseIndex: number) => {
-    const verse = hafsData[number]?.[verseIndex];
-    if (!verse) return '';
+    // Find the verse where verse.verse === verseIndex + 1 (since verses are 1-based)
+    const verse = hafsData[number]?.find(v => v.verse === verseIndex + 1);
+    if (!verse) {
+      console.warn('No verse found for index:', verseIndex, 'in surah', number);
+      return '';
+    }
+    console.log('Current verse:', verse);
     return verse.text;
   };
   
   const moveToNextVerse = () => {
-    const nextIndex = currentVerseIndex + 1;
+    const nextIndex = currentIndex + 1;
     
     if (nextIndex >= hafsData[number].length) return;
     
@@ -191,16 +199,8 @@ export default function Surah() {
     
     Vibration.vibrate([50, 100, 50]);
     
-    // Clear the current spoken text before moving to next verse
     setSpokenText('');
-    
-    // Update the current verse index
-    setCurrentVerseIndex(nextIndex);
-    
-    // Update the current index for the flatlist
     setCurrentIndex(nextIndex);
-    
-    setLastTransitionTime(Date.now());
     setVerseProgress(0);
     
     try {
@@ -226,26 +226,27 @@ export default function Surah() {
   const processSpokenText = (text: string) => {
     if (!text || text.length < 3) return;
     
-    // Get the current verse text using the currentIndex to ensure we're checking the right verse
+    // Get the current verse text using currentIndex
     const currentVerseText = getCurrentVerseText(currentIndex);
     if (!currentVerseText) return;
     
     const result = matchVerse(text, currentVerseText);
     
     setVerseProgress(result.percentage);
-    setDebugInfo(`${currentIndex + 1}/${surah.length}: ${result.debug}`);
+    setDebugInfo(`Verse ${currentIndex + 1}/${surah.length}: ${result.debug}`);
     
-    console.log(`Verse ${currentIndex + 1} match:`, result.debug);
+    console.log(`Checking verse ${currentIndex + 1}:`, text);
+    console.log(`Against verse ${currentIndex + 1} text:`, currentVerseText);
+    console.log('Match result:', result);
     
     if (result.isMatch) {
+      console.log(`Match found for verse ${currentIndex + 1}, moving to next verse`);
       moveToNextVerse();
     }
   };
 
   const handleStartListening = async () => {
     try {
-      setCurrentVerseIndex(currentIndex);
-      
       setVerseProgress(0);
       setSpokenText('');
       setDebugInfo('');
