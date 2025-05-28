@@ -33,7 +33,6 @@ export default function Surah() {
   const [currentBookmark, setCurrentBookmark] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [spokenText, setSpokenText] = useState('');
-  const [verificationText, setVerificationText] = useState('');
   const [debugInfo, setDebugInfo] = useState('');
   const [verseProgress, setVerseProgress] = useState(0);
 
@@ -118,12 +117,10 @@ export default function Surah() {
       
       setIsListening(true);
       setSpokenText('');
-      setVerificationText('');
       setDebugInfo('Listening...');
     } catch (error) {
       console.error('Error starting voice recognition:', error);
       setIsListening(false);
-      setVerificationText('Error starting microphone');
     }
   };
 
@@ -154,7 +151,6 @@ export default function Surah() {
     Voice.onSpeechError = (error) => {
       console.error('Voice error:', error);
       setIsListening(false);
-      setVerificationText('Error during voice recognition');
       setSpokenText('');
       setDebugInfo('Error during voice recognition');
     };
@@ -180,7 +176,6 @@ export default function Surah() {
   const moveToNextVerse = () => {
     const nextIndex = currentIndex + 1;
     if (nextIndex >= hafsData[number].length) return;    
-    setVerificationText('✅ Correct!');
     Vibration.vibrate([50, 100, 50]);
     
     setSpokenText('');
@@ -227,30 +222,16 @@ export default function Surah() {
       setVerseProgress(0);
       setSpokenText('');
       setDebugInfo('');
-      setVerificationText(`Start reciting verse ${hafsData[number][currentIndex].verse}`);
       
       await startVoiceRecognition();
-      
-      setTimeout(() => {
-        if (isMounted.current && isListening) {
-          setVerificationText('');
-        }
-      }, 2000);
     } catch (error) {
       console.error('Error starting listening:', error);
-      setVerificationText('Error starting microphone');
     }
   };
 
   const handleStopListening = async () => {
     try {
       await stopVoiceRecognition();
-      setVerificationText('Microphone stopped');
-      setTimeout(() => {
-        if (isMounted.current) {
-          setVerificationText('');
-        }
-      }, 2000);
     } catch (error) {
       console.error('Error stopping listening:', error);
     }
@@ -376,18 +357,6 @@ export default function Surah() {
               </View>
             </View>
           )}
-          {verificationText ? (
-            <ThemedText style={[styles.verificationText, {
-              color: verificationText.startsWith('✅') ? '#4CAF50' : 
-                     verificationText.startsWith('❌') ? '#F44336' : colors.text,
-              fontSize: 16,
-              textAlign: 'center',
-              marginBottom: 10,
-              fontWeight: 'bold'
-            }]}> 
-              {verificationText}
-            </ThemedText>
-          ) : null}
           {debugInfo && isListening ? (
             <ThemedView style={{
               marginTop: 5,
