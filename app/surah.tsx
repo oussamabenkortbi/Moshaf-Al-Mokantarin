@@ -4,7 +4,7 @@ type SuraNumber = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 
   69 | 70 | 71 | 72 | 73 | 74 | 75 | 76 | 77 | 78 | 79 | 80 | 81 | 82 | 83 | 84 | 85 | 86 | 87 | 88 | 89 | 90 | 91 | 92 |
   93 | 94 | 95 | 96 | 97 | 98 | 99 | 100 | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 | 111 | 112 | 113 | 114}`;
 
-import { FlatList, StyleSheet, Text, ViewToken, Pressable, ImageBackground, useWindowDimensions, View, Animated, Vibration } from 'react-native';
+import { FlatList, StyleSheet, Text, ViewToken, Pressable, ImageBackground, useWindowDimensions, View, Vibration } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useRef, useState, useEffect } from 'react';
 import { Feather, FontAwesome } from "@expo/vector-icons";
@@ -43,21 +43,13 @@ export default function Surah() {
   const flatListRef = useRef<FlatList<string>>(null);
   const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const animation = useRef<Animated.CompositeAnimation | null>(null);
-  const waveAnimations = useRef<Animated.CompositeAnimation[]>([]);
+
   const isMounted = useRef(true);
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 100,
   }).current;
-  const animationValue = useRef(new Animated.Value(0)).current;
-  const waveAnimationValues = [
-    useRef(new Animated.Value(0)).current,
-    useRef(new Animated.Value(0)).current,
-    useRef(new Animated.Value(0)).current,
-  ];
 
   const { width, height } = useWindowDimensions();
-  const theme = useTheme();
   
   const surah = riwaya === 'hafs' ? hafsData[number] : warshData[number];
   const padding = interpolate(width, 12, 24, 320, 1366);
@@ -67,29 +59,7 @@ export default function Surah() {
   const surahFrameHeight = interpolate(width, 50, 67, 320, 1366);
   const fontSizeAyah = interpolate(width, 18, 28, 320, 1366);
   const ayahFrameSize = interpolate(width, 36, 56, 320, 1366);
-
-  const renderAyah = ({ item, index }: { item: typeof surah[0]; index: number }) => {
-    const isCurrent = index === currentIndex;
-    return (
-      <Pressable onPress={() => handleVersePress(index)}>
-        <ThemedView style={[styles.ayahContainer, isCurrent && styles.currentAyah]}>
-          <Text style={[styles.arabicText, { fontSize }]}>{item.text}</Text>
-          <View style={styles.ayahNumberContainer}>
-            <Text style={styles.ayahNumber}>{item.verse}</Text>
-          </View>
-          {isCurrent && (
-            <AyahBookmark
-              item={surah[currentIndex]}
-              padding={16}
-              fontSize={24}
-              fontFamily="hafs"
-              textColor="#000000"
-            />
-          )}
-        </ThemedView>
-      </Pressable>
-    );
-  };
+  const { colors } = useTheme();
 
   const getRiwaya = async () => {
     try {
@@ -100,62 +70,30 @@ export default function Surah() {
     }
   }
 
-  const startAnimations = () => {
-    animation.current = Animated.loop(
-      Animated.sequence([
-        Animated.timing(animationValue, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(animationValue, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    animation.current.start();
-
-    waveAnimations.current = waveAnimationValues.map((value, index) => {
-      const anim = Animated.loop(
-        Animated.sequence([
-          Animated.delay(index * 200),
-          Animated.timing(value, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(value, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      anim.start();
-      return anim;
-    });
-  };
-
-  const stopAnimations = () => {
-    if (animation.current) {
-      animation.current.stop();
-      animation.current = null;
-    }
-    waveAnimations.current.forEach(anim => anim?.stop());
-    waveAnimations.current = [];
-  };
+  useEffect(() => {
+    console.log(debugInfo);
+  }, [debugInfo]);
 
   const startVoiceRecognition = async () => {
     try {
-      await Voice.start('en-US');
+      await Voice.start('ar-SA', {
+        EXTRA_PARTIAL_RESULTS: true,
+        EXTRA_MAX_RESULTS: 1,
+        EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: 1000,
+        EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: 1000,
+        EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS: 1000,
+      });
+      
       setIsListening(true);
       setSpokenText('');
       setVerificationText('');
       setDebugInfo('Listening...');
     } catch (error) {
       console.error('Error starting voice recognition:', error);
+      // Try to restart on error
+      if (isMounted.current) {
+        setTimeout(startVoiceRecognition, 1000);
+      }
     }
   };
 
@@ -178,74 +116,15 @@ export default function Surah() {
     setDebugInfo(`Match: ${percentage.toFixed(1)}%`);
 
     if (isMatch) {
-      setTimeout(() => {
-        if (currentIndex < surah.length - 1) {
-          flatListRef.current?.scrollToIndex({
-            index: currentIndex + 1,
-            animated: true,
-          });
-        }
-      }, 1000);
+      // Keep the microphone active while scrolling to next verse
+      if (currentIndex < surah.length - 1) {
+        flatListRef.current?.scrollToIndex({
+          index: currentIndex + 1,
+          animated: true,
+        });
+      }
     }
   };
-
-  useEffect(() => {
-    const initialize = async () => {
-      await getRiwaya();
-
-      if (!hasScrolled) {
-        flatListRef.current?.scrollToIndex({
-          index: Math.min(Number(ayah) ?? 1, hafsData[number].length - 1),
-          animated: false,
-        });
-        setHasScrolled(true);
-      }
-
-      checkBookmark();
-    };
-
-    initialize();
-    
-    return () => {
-      isMounted.current = false;
-      stopVoiceRecognition();
-      stopAnimations();
-    };
-  }, [ayah, currentIndex]);
-  
-  useEffect(() => {
-    if (isListening) {
-      startAnimations();
-    } else {
-      stopAnimations();
-    }
-    
-    return () => {
-      stopAnimations();
-    };
-  }, [isListening]);
-  
-  useEffect(() => {
-    Voice.onSpeechStart = () => {
-      setDebugInfo('Speech started');
-    };
-
-    Voice.onSpeechEnd = () => {
-      setDebugInfo('Speech ended');
-    };
-
-    Voice.onSpeechResults = (e) => {
-      if (e.value && e.value.length > 0) {
-        const recognizedText = e.value[0];
-        setSpokenText(recognizedText);
-        verifyRecitation(recognizedText);
-      }
-    };
-
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-    };
-  }, [currentIndex]);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0) {
@@ -253,22 +132,6 @@ export default function Surah() {
     }
   }).current;
   
-  const handleMicPress = () => {
-    if (isListening) {
-      stopVoiceRecognition();
-    } else {
-      startVoiceRecognition();
-    }
-  };
-  
-  const handleVersePress = (index: number) => {
-    flatListRef.current?.scrollToIndex({
-      index,
-      animated: true,
-      viewPosition: 0.5,
-    });
-  };
-
   const checkBookmark = async () => {
     try {
       const bookmarksStorage = await AsyncStorage.getItem("bookmarks");
@@ -309,62 +172,6 @@ export default function Surah() {
   }, [currentIndex]);
 
   useEffect(() => {
-    if (isListening) {
-      animation.current = Animated.loop(
-        Animated.sequence([
-          Animated.timing(animationValue, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(animationValue, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      animation.current.start();
-
-      waveAnimations.current = waveAnimationValues.map((value, index) => {
-        const anim = Animated.loop(
-          Animated.sequence([
-            Animated.delay(index * 200),
-            Animated.timing(value, {
-              toValue: 1,
-              duration: 1000,
-              useNativeDriver: true,
-            }),
-            Animated.timing(value, {
-              toValue: 0,
-              duration: 1000,
-              useNativeDriver: true,
-            }),
-          ])
-        );
-        anim.start();
-        return anim;
-      });
-    } else {
-      if (animation.current) {
-        animation.current.stop();
-        animation.current = null;
-      }
-      waveAnimations.current.forEach(anim => anim?.stop());
-      waveAnimations.current = [];
-      animationValue.setValue(0);
-      waveAnimationValues.forEach(value => value.setValue(0));
-    }
-
-    return () => {
-      if (animation.current) {
-        animation.current.stop();
-      }
-      waveAnimations.current.forEach(anim => anim?.stop());
-    };
-  }, [isListening]);
-
-  useEffect(() => {
     Voice.onSpeechResults = onSpeechResults;
     
     return () => {
@@ -384,45 +191,6 @@ export default function Surah() {
       await Voice.start('ar-SA');
     } catch (error) {
       console.error('Error starting voice recognition:', error);
-      setIsListening(false);
-    }
-  };
-
-  const stopListening = async () => {
-    try {
-      if (animation.current) {
-        animation.current.stop();
-        animation.current = null;
-      }
-
-      waveAnimations.current.forEach((anim) => {
-        if (anim) {
-          anim.stop();
-        }
-      });
-      waveAnimations.current = [];
-
-      animationValue.setValue(0);
-      waveAnimationValues.forEach((value) => value.setValue(0));
-
-      await Voice.stop();
-
-      setIsListening(false);
-      setVerseProgress(0);
-      setVerificationText('');
-      setSpokenText('');
-
-      if (silenceTimeout.current) {
-        clearTimeout(silenceTimeout.current);
-        silenceTimeout.current = null;
-      }
-
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-        debounceTimeout.current = null;
-      }
-    } catch (error) {
-      console.error('Error stopping voice recognition:', error);
       setIsListening(false);
     }
   };
@@ -507,8 +275,6 @@ export default function Surah() {
     }
   };
 
-  const { colors } = useTheme();
-
   const handleStartListening = async () => {
     try {
       setCurrentVerseIndex(currentIndex);
@@ -580,6 +346,30 @@ export default function Surah() {
         <FontAwesome
           name={currentBookmark ? "bookmark" : "bookmark-o"}
           size={ayahFrameSize - 6}
+          color={colors.primary}
+        />
+      </Pressable>
+      <Pressable
+        onPress={isListening ? stopVoiceRecognition : handleStartListening}
+        style={({ pressed }) => ({
+          position: 'absolute', 
+          bottom: 20, 
+          right: 20, 
+          zIndex: 10,
+          backgroundColor: colors.card,
+          borderRadius: 24,
+          padding: 8,
+          elevation: 2,
+          shadowColor: colors.text,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.2,
+          shadowRadius: 1.41,
+          opacity: pressed ? 0.8 : 1,
+        })}
+      >
+        <MaterialCommunityIcons
+          name={isListening ? 'pause-circle' : 'microphone'}
+          size={36}
           color={colors.primary}
         />
       </Pressable>
@@ -712,30 +502,6 @@ export default function Surah() {
           showsVerticalScrollIndicator={false}
         />
       )}
-      <Pressable
-        onPress={isListening ? stopListening : handleStartListening}
-        style={({ pressed }) => ({
-          position: 'absolute', 
-          bottom: 20, 
-          right: 20, 
-          zIndex: 10,
-          backgroundColor: colors.card,
-          borderRadius: 24,
-          padding: 8,
-          elevation: 2,
-          shadowColor: colors.text,
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.2,
-          shadowRadius: 1.41,
-          opacity: pressed ? 0.8 : 1,
-        })}
-      >
-        <MaterialCommunityIcons
-          name={isListening ? 'pause-circle' : 'microphone'}
-          size={36}
-          color={colors.primary}
-        />
-      </Pressable>
     </ThemedContainer>
   );
 }
