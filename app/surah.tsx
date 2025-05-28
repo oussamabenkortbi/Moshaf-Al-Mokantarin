@@ -107,25 +107,6 @@ export default function Surah() {
     }
   };
 
-  const verifyRecitation = (text: string) => {
-    const currentVerse = surah[currentIndex];
-    if (!currentVerse) return;
-
-    const { isMatch, percentage } = matchVerse(text, currentVerse.text);
-    setVerificationText(isMatch ? 'Correct!' : 'Try again');
-    setDebugInfo(`Match: ${percentage.toFixed(1)}%`);
-
-    if (isMatch) {
-      // Keep the microphone active while scrolling to next verse
-      if (currentIndex < surah.length - 1) {
-        flatListRef.current?.scrollToIndex({
-          index: currentIndex + 1,
-          animated: true,
-        });
-      }
-    }
-  };
-
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0) {
       setCurrentIndex(viewableItems[0].index || 0);
@@ -206,16 +187,20 @@ export default function Surah() {
     
     if (nextIndex >= hafsData[number].length) return;
     
-    setVerificationText('✅ Correct! Moving to next verse...');
+    setVerificationText('✅ Correct!');
     
     Vibration.vibrate([50, 100, 50]);
     
-    setCurrentVerseIndex(nextIndex);
-    
-    setLastTransitionTime(Date.now());
-    
+    // Clear the current spoken text before moving to next verse
     setSpokenText('');
     
+    // Update the current verse index
+    setCurrentVerseIndex(nextIndex);
+    
+    // Update the current index for the flatlist
+    setCurrentIndex(nextIndex);
+    
+    setLastTransitionTime(Date.now());
     setVerseProgress(0);
     
     try {
@@ -228,12 +213,6 @@ export default function Surah() {
     } catch (error) {
       console.error('Error scrolling:', error);
     }
-    
-    setTimeout(() => {
-      if (isMounted.current) {
-        setVerificationText('');
-      }
-    }, 1500);
   };
 
   const onSpeechResults = (event: { value?: string[] }) => {
@@ -241,34 +220,22 @@ export default function Surah() {
     if (!text || !isMounted.current) return;
 
     setSpokenText(text);
-    
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
-    }
-
-    debounceTimeout.current = setTimeout(() => {
-      if (!isMounted.current) return;
-      
-      processSpokenText(text);
-    }, 0);
+    processSpokenText(text);
   };
   
   const processSpokenText = (text: string) => {
     if (!text || text.length < 3) return;
     
-    const currentTime = Date.now();
-    if (currentTime - lastTransitionTime < 1500) {
-    }
-    
-    const currentVerseText = getCurrentVerseText(currentVerseIndex);
+    // Get the current verse text using the currentIndex to ensure we're checking the right verse
+    const currentVerseText = getCurrentVerseText(currentIndex);
     if (!currentVerseText) return;
     
     const result = matchVerse(text, currentVerseText);
     
     setVerseProgress(result.percentage);
-    setDebugInfo(result.debug);
+    setDebugInfo(`${currentIndex + 1}/${surah.length}: ${result.debug}`);
     
-    console.log(`Verse ${currentVerseIndex + 1} match:`, result.debug);
+    console.log(`Verse ${currentIndex + 1} match:`, result.debug);
     
     if (result.isMatch) {
       moveToNextVerse();
