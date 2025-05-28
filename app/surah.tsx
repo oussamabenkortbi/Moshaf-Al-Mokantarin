@@ -38,8 +38,6 @@ export default function Surah() {
   const [verseProgress, setVerseProgress] = useState(0);
 
   const flatListRef = useRef<FlatList<string>>(null);
-  const silenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isMounted = useRef(true);
   const viewabilityConfig = useRef({
@@ -71,51 +69,6 @@ export default function Surah() {
     getRiwaya();
   }, []);
 
-  useEffect(() => {
-    console.log(debugInfo);
-  }, [debugInfo]);
-
-  const startVoiceRecognition = async () => {
-    try {
-      await Voice.start('ar-SA', {
-        EXTRA_PARTIAL_RESULTS: true,
-        EXTRA_MAX_RESULTS: 1,
-        EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: 1000,
-        EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: 1000,
-        EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS: 1000,
-      });
-      
-      setIsListening(true);
-      setSpokenText('');
-      setVerificationText('');
-      setDebugInfo('Listening...');
-    } catch (error) {
-      console.error('Error starting voice recognition:', error);
-      // Try to restart on error
-      if (isMounted.current) {
-        setTimeout(startVoiceRecognition, 1000);
-      }
-    }
-  };
-
-  const stopVoiceRecognition = async () => {
-    try {
-      await Voice.stop();
-      setIsListening(false);
-      setDebugInfo('Stopped listening');
-    } catch (error) {
-      console.error('Error stopping voice recognition:', error);
-    }
-  };
-
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    if (viewableItems.length > 0 && isMounted.current) {
-      const newIndex = viewableItems[0].index || 0;
-      setCurrentIndex(newIndex);
-      console.log('Viewable item changed:', newIndex);
-    }
-  }).current;
-  
   const checkBookmark = async () => {
     try {
       const bookmarksStorage = await AsyncStorage.getItem("bookmarks");
@@ -156,28 +109,62 @@ export default function Surah() {
   }, [currentIndex]);
 
   useEffect(() => {
+    console.log(debugInfo);
+  }, [debugInfo]);
+
+  const startVoiceRecognition = async () => {
+    try {
+      await Voice.start('ar-SA');
+      
+      setIsListening(true);
+      setSpokenText('');
+      setVerificationText('');
+      setDebugInfo('Listening...');
+    } catch (error) {
+      console.error('Error starting voice recognition:', error);
+      setIsListening(false);
+      setVerificationText('Error starting microphone');
+    }
+  };
+
+  const stopVoiceRecognition = async () => {
+    try {
+      await Voice.stop();
+      setIsListening(false);
+      setSpokenText('');
+      setDebugInfo('Stopped listening');
+    } catch (error) {
+      console.error('Error stopping voice recognition:', error);
+      setIsListening(false);
+      setSpokenText('');
+    }
+  };
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (viewableItems.length > 0 && isMounted.current) {
+      const newIndex = viewableItems[0].index || 0;
+      setCurrentIndex(newIndex);
+      setSpokenText('');
+      console.log('Viewable item changed:', newIndex);
+    }
+  }).current;
+  
+  useEffect(() => {
     Voice.onSpeechResults = onSpeechResults;
+    Voice.onSpeechError = (error) => {
+      console.error('Voice error:', error);
+      setIsListening(false);
+      setVerificationText('Error during voice recognition');
+      setSpokenText('');
+      setDebugInfo('Error during voice recognition');
+    };
     
     return () => {
       isMounted.current = false;
       Voice.destroy().then(Voice.removeAllListeners);
-      if (silenceTimeout.current) clearTimeout(silenceTimeout.current);
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
   }, []);
 
-  const startListening = async () => {
-    if (!isMounted.current) return;
-    
-    try {
-      setIsListening(true);
-      setSpokenText('');
-      await Voice.start('ar-SA');
-    } catch (error) {
-      console.error('Error starting voice recognition:', error);
-      setIsListening(false);
-    }
-  };
 
   const getCurrentVerseText = (verseIndex: number) => {
     // Find the verse where verse.verse === verseIndex + 1 (since verses are 1-based)
@@ -192,11 +179,8 @@ export default function Surah() {
   
   const moveToNextVerse = () => {
     const nextIndex = currentIndex + 1;
-    
-    if (nextIndex >= hafsData[number].length) return;
-    
+    if (nextIndex >= hafsData[number].length) return;    
     setVerificationText('✅ Correct!');
-    
     Vibration.vibrate([50, 100, 50]);
     
     setSpokenText('');
@@ -215,34 +199,27 @@ export default function Surah() {
     }
   };
 
+  useEffect(() => {
+    if (spokenText && spokenText.length > 2) {
+      const currentVerseText = getCurrentVerseText(currentIndex);
+      if (!currentVerseText) return;
+  
+      const result = matchVerse(spokenText, currentVerseText);
+  
+      setVerseProgress(result.percentage);
+      setDebugInfo(`Verse ${currentIndex + 1}/${hafsData[number].length}: ${result.debug}`);
+  
+      if (result.isMatch) {
+        moveToNextVerse();
+      }
+    }
+  }, [spokenText, currentIndex]);
+
   const onSpeechResults = (event: { value?: string[] }) => {
     const text = event.value?.[0];
     if (!text || !isMounted.current) return;
-
-    setSpokenText(text);
-    processSpokenText(text);
-  };
   
-  const processSpokenText = (text: string) => {
-    if (!text || text.length < 3) return;
-    
-    // Get the current verse text using currentIndex
-    const currentVerseText = getCurrentVerseText(currentIndex);
-    if (!currentVerseText) return;
-    
-    const result = matchVerse(text, currentVerseText);
-    
-    setVerseProgress(result.percentage);
-    setDebugInfo(`Verse ${currentIndex + 1}/${surah.length}: ${result.debug}`);
-    
-    console.log(`Checking verse ${currentIndex + 1}:`, text);
-    console.log(`Against verse ${currentIndex + 1} text:`, currentVerseText);
-    console.log('Match result:', result);
-    
-    if (result.isMatch) {
-      console.log(`Match found for verse ${currentIndex + 1}, moving to next verse`);
-      moveToNextVerse();
-    }
+    setSpokenText(text);
   };
 
   const handleStartListening = async () => {
@@ -252,7 +229,7 @@ export default function Surah() {
       setDebugInfo('');
       setVerificationText(`Start reciting verse ${hafsData[number][currentIndex].verse}`);
       
-      await startListening();
+      await startVoiceRecognition();
       
       setTimeout(() => {
         if (isMounted.current && isListening) {
@@ -262,6 +239,20 @@ export default function Surah() {
     } catch (error) {
       console.error('Error starting listening:', error);
       setVerificationText('Error starting microphone');
+    }
+  };
+
+  const handleStopListening = async () => {
+    try {
+      await stopVoiceRecognition();
+      setVerificationText('Microphone stopped');
+      setTimeout(() => {
+        if (isMounted.current) {
+          setVerificationText('');
+        }
+      }, 2000);
+    } catch (error) {
+      console.error('Error stopping listening:', error);
     }
   };
 
@@ -318,7 +309,7 @@ export default function Surah() {
         />
       </Pressable>
       <Pressable
-        onPress={isListening ? stopVoiceRecognition : handleStartListening}
+        onPress={isListening ? handleStopListening : handleStartListening}
         style={({ pressed }) => ({
           position: 'absolute', 
           bottom: 20, 
