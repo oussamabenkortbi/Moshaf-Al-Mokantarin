@@ -43,11 +43,13 @@ export function matchVerse(spokenText: string, verseText: string) {
   
   // For very short verses (1-2 words), just need one word match
   if (verseWords.length <= 2) {
-    threshold = 50; // Match at least one word in a two-word verse
+    threshold = 90; // Match at least one word in a two-word verse
   } else if (verseWords.length <= 5) {
-    threshold = 60; // For shorter verses, require 60%
-  } else if (verseWords.length >= 15) {
+    threshold = 80; // For shorter verses, require 80%
+  } else if (verseWords.length >= 10) {
     threshold = 70; // For very long verses, only require 70%
+  } else if (verseWords.length >= 15) {
+    threshold = 60; // For very long verses, only require 60%
   }
   
   // Debug message
